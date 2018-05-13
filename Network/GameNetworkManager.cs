@@ -9,6 +9,7 @@ public class GameNetworkManager : BaseNetworkGameManager
         get { return SimplePhotonNetworkManager.Singleton as GameNetworkManager; }
     }
 
+    [PunRPC]
     protected void RpcCharacterAttack(
         string weaponId, 
         bool isLeftHandWeapon, 
@@ -23,6 +24,7 @@ public class GameNetworkManager : BaseNetworkGameManager
             DamageEntity.InstantiateNewEntity(weaponId, isLeftHandWeapon, position, direction, attackerViewId, addRotationX, addRotationY);
     }
 
+    [PunRPC]
     protected override void RpcAddPlayer()
     {
         var position = Vector3.zero;
@@ -39,12 +41,10 @@ public class GameNetworkManager : BaseNetworkGameManager
         }
         var characterGo = PhotonNetwork.Instantiate(characterPrefab.name, position, rotation, 0);
         var character = characterGo.GetComponent<CharacterEntity>();
-        // Set character data
-        character.Hp = character.TotalHp;
-        character.selectHead = GameInstance.GetAvailableHead(PlayerSave.GetHead()).GetId();
-        character.selectCharacter = GameInstance.GetAvailableCharacter(PlayerSave.GetCharacter()).GetId();
-        character.selectWeapon = GameInstance.GetAvailableWeapon(PlayerSave.GetWeapon()).GetId();
-        character.extra = "";
+        character.CmdInit(GameInstance.GetAvailableHead(PlayerSave.GetHead()).GetId(),
+            GameInstance.GetAvailableCharacter(PlayerSave.GetCharacter()).GetId(),
+            GameInstance.GetAvailableWeapon(PlayerSave.GetWeapon()).GetId(),
+            "");
     }
 
     protected override void UpdateScores(NetworkGameScore[] scores)

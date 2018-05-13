@@ -25,7 +25,7 @@ public class IONetworkGameRule : BaseNetworkGameRule
         if (overrideBotPrefab != null)
             botPrefab = overrideBotPrefab;
         // Set character data
-        var botGo = PhotonNetwork.Instantiate(botPrefab.name, Vector3.zero, Quaternion.identity, 0);
+        var botGo = PhotonNetwork.InstantiateSceneObject(botPrefab.name, Vector3.zero, Quaternion.identity, 0, new object[0]);
         var botEntity = botGo.GetComponent<BotEntity>();
         botEntity.playerName = bot.name;
         botEntity.selectHead = bot.GetSelectHead();

@@ -41,6 +41,11 @@ public class BotEntity : CharacterEntity
     private float lastAttackTime;
     private bool isWallHit;
 
+    protected override void Init()
+    {
+        base.Init();
+    }
+
     protected override void Awake()
     {
         base.Awake();
@@ -50,6 +55,21 @@ public class BotEntity : CharacterEntity
             lastUpdateMovementTime = Time.unscaledTime - updateMovementDuration;
             lastAttackTime = Time.unscaledTime - attackDuration;
         }
+    }
+
+    // Override to do nothing
+    protected override void SetLocalPlayer()
+    {
+    }
+
+    // Override to do nothing
+    protected override void OnStartLocalPlayer()
+    {
+    }
+
+    // Override to do nothing
+    protected override void UpdateInput()
+    {
     }
 
     protected override void UpdateMovements()
@@ -137,6 +157,7 @@ public class BotEntity : CharacterEntity
         Hp = TotalHp;
     }
 
+    [PunRPC]
     protected override void RpcUpdateSelectCharacter(string value)
     {
         if (fixCharacterModel != null && fixCharacterData != null)
@@ -168,6 +189,7 @@ public class BotEntity : CharacterEntity
             base.RpcUpdateSelectCharacter(value);
     }
 
+    [PunRPC]
     protected override void RpcUpdateSelectHead(string value)
     {
         if (fixHeadData != null)
@@ -179,6 +201,7 @@ public class BotEntity : CharacterEntity
             base.RpcUpdateSelectHead(value);
     }
 
+    [PunRPC]
     protected override void RpcUpdateSelectWeapon(string value)
     {
         if (fixWeaponData != null)

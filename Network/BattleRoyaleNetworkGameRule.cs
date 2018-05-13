@@ -64,7 +64,7 @@ public class BattleRoyaleNetworkGameRule : IONetworkGameRule
                         continue;
                     }
                     if (!character.IsDead)
-                        extra.RpcRankResult(1);
+                        extra.photonView.RPC("RpcRankResult", extra.photonView.owner, 1);
                 }
             }
             // If some characters are not spawned, won't end match

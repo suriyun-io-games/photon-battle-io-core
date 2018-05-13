@@ -197,6 +197,7 @@ public class UIMainMenu : MonoBehaviour
         PlayerSave.SetHead(SelectHead);
         PlayerSave.SetWeapon(SelectWeapon);
         PlayerSave.SetPlayerName(inputName.text);
+        PhotonNetwork.playerName = PlayerSave.GetPlayerName();
     }
 
     public void UpdateAvailableItems()

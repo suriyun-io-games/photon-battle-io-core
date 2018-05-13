@@ -57,86 +57,86 @@ public class BRGameplayManager : GameplayManager
     #region Sync Vars
     public int currentCircle
     {
-        get { return (int)PhotonNetwork.room.CustomProperties[CUSTOM_ROOM_CURRENT_CIRCLE]; }
+        get { try { return (int)PhotonNetwork.room.CustomProperties[CUSTOM_ROOM_CURRENT_CIRCLE]; } catch { } return 0; }
         set { if (PhotonNetwork.isMasterClient && value != currentCircle) PhotonNetwork.room.SetCustomProperties(new Hashtable() { { CUSTOM_ROOM_CURRENT_CIRCLE, value } }); }
     }
     public float currentRadius
     {
-        get { return (float)PhotonNetwork.room.CustomProperties[CUSTOM_ROOM_CURRENT_RADIUS]; }
+        get { try { return (float)PhotonNetwork.room.CustomProperties[CUSTOM_ROOM_CURRENT_RADIUS]; } catch { } return 0f; }
         set { if (PhotonNetwork.isMasterClient && value != currentRadius) PhotonNetwork.room.SetCustomProperties(new Hashtable() { { CUSTOM_ROOM_CURRENT_RADIUS, value } }); }
     }
     public Vector3 currentCenterPosition
     {
-        get { return (Vector3)PhotonNetwork.room.CustomProperties[CUSTOM_ROOM_CURRENT_CENTER_POSITION]; }
+        get { try { return (Vector3)PhotonNetwork.room.CustomProperties[CUSTOM_ROOM_CURRENT_CENTER_POSITION]; } catch { } return Vector3.zero; }
         set { if (PhotonNetwork.isMasterClient && value != currentCenterPosition) PhotonNetwork.room.SetCustomProperties(new Hashtable() { { CUSTOM_ROOM_CURRENT_CENTER_POSITION, value } }); }
     }
     public float nextRadius
     {
-        get { return (float)PhotonNetwork.room.CustomProperties[CUSTOM_ROOM_NEXT_RADIUS]; }
+        get { try { return (float)PhotonNetwork.room.CustomProperties[CUSTOM_ROOM_NEXT_RADIUS]; } catch { } return 0f; }
         set { if (PhotonNetwork.isMasterClient && value != nextRadius) PhotonNetwork.room.SetCustomProperties(new Hashtable() { { CUSTOM_ROOM_NEXT_RADIUS, value } }); }
     }
     public Vector3 nextCenterPosition
     {
-        get { return (Vector3)PhotonNetwork.room.CustomProperties[CUSTOM_ROOM_NEXT_CENTER_POSITION]; }
+        get { try { return (Vector3)PhotonNetwork.room.CustomProperties[CUSTOM_ROOM_NEXT_CENTER_POSITION]; } catch { } return Vector3.zero; }
         set { if (PhotonNetwork.isMasterClient && value != nextCenterPosition) PhotonNetwork.room.SetCustomProperties(new Hashtable() { { CUSTOM_ROOM_NEXT_CENTER_POSITION, value } }); }
     }
     public BRState currentState
     {
-        get { return (BRState)PhotonNetwork.room.CustomProperties[CUSTOM_ROOM_CURRENT_STATE]; }
+        get { try { return (BRState)PhotonNetwork.room.CustomProperties[CUSTOM_ROOM_CURRENT_STATE]; } catch { } return BRState.WaitingForPlayers; }
         set { if (PhotonNetwork.isMasterClient && value != currentState) PhotonNetwork.room.SetCustomProperties(new Hashtable() { { CUSTOM_ROOM_CURRENT_STATE, (byte)value } }); }
     }
     public float currentDuration
     {
-        get { return (float)PhotonNetwork.room.CustomProperties[CUSTOM_ROOM_CURRENT_DURATION]; }
+        get { try { return (float)PhotonNetwork.room.CustomProperties[CUSTOM_ROOM_CURRENT_DURATION]; } catch { } return 0f; }
         set { if (PhotonNetwork.isMasterClient && value != currentDuration) PhotonNetwork.room.SetCustomProperties(new Hashtable() { { CUSTOM_ROOM_CURRENT_DURATION, value } }); }
     }
     public float currentCountdown
     {
-        get { return (float)PhotonNetwork.room.CustomProperties[CUSTOM_ROOM_CURRENT_COUNTDOWN]; }
+        get { try { return (float)PhotonNetwork.room.CustomProperties[CUSTOM_ROOM_CURRENT_COUNTDOWN]; } catch { } return 0f; }
         set
         {
             if (PhotonNetwork.isMasterClient && value != currentCountdown)
             {
                 PhotonNetwork.room.SetCustomProperties(new Hashtable() { { CUSTOM_ROOM_CURRENT_COUNTDOWN, value } });
-                photonView.RPC("RpcOnCurrentCountdownChanged", PhotonTargets.AllBuffered, value);
+                photonView.RPC("RpcOnCurrentCountdownChanged", PhotonTargets.All, value);
             }
         }
     }
     public Vector3 spawnerMoveFrom
     {
-        get { return (Vector3)PhotonNetwork.room.CustomProperties[CUSTOM_ROOM_SPAWNER_MOVE_FROM]; }
+        get { try { return (Vector3)PhotonNetwork.room.CustomProperties[CUSTOM_ROOM_SPAWNER_MOVE_FROM]; } catch { } return Vector3.zero; }
         set { if (PhotonNetwork.isMasterClient && value != spawnerMoveFrom) PhotonNetwork.room.SetCustomProperties(new Hashtable() { { CUSTOM_ROOM_SPAWNER_MOVE_FROM, value } }); }
     }
     public Vector3 spawnerMoveTo
     {
-        get { return (Vector3)PhotonNetwork.room.CustomProperties[CUSTOM_ROOM_SPAWNER_MOVE_TO]; }
+        get { try { return (Vector3)PhotonNetwork.room.CustomProperties[CUSTOM_ROOM_SPAWNER_MOVE_TO]; } catch { } return Vector3.zero; }
         set { if (PhotonNetwork.isMasterClient && value != spawnerMoveTo) PhotonNetwork.room.SetCustomProperties(new Hashtable() { { CUSTOM_ROOM_SPAWNER_MOVE_TO, value } }); }
     }
     public float spawnerMoveDuration
     {
-        get { return (float)PhotonNetwork.room.CustomProperties[CUSTOM_ROOM_SPAWNER_MOVE_DURATION]; }
+        get { try { return (float)PhotonNetwork.room.CustomProperties[CUSTOM_ROOM_SPAWNER_MOVE_DURATION]; } catch { } return 0f; }
         set { if (PhotonNetwork.isMasterClient && value != spawnerMoveDuration) PhotonNetwork.room.SetCustomProperties(new Hashtable() { { CUSTOM_ROOM_SPAWNER_MOVE_DURATION, value } }); }
     }
     public float spawnerMoveCountdown
     {
-        get { return (float)PhotonNetwork.room.CustomProperties[CUSTOM_ROOM_SPAWNER_MOVE_COUNTDOWN]; }
+        get { try { return (float)PhotonNetwork.room.CustomProperties[CUSTOM_ROOM_SPAWNER_MOVE_COUNTDOWN]; } catch { } return 0f; }
         set
         {
             if (PhotonNetwork.isMasterClient && value != spawnerMoveCountdown)
             {
                 PhotonNetwork.room.SetCustomProperties(new Hashtable() { { CUSTOM_ROOM_SPAWNER_MOVE_COUNTDOWN, value } });
-                photonView.RPC("RpcOnSpawnerMoveCountdownChanged", PhotonTargets.AllBuffered, value);
+                photonView.RPC("RpcOnSpawnerMoveCountdownChanged", PhotonTargets.All, value);
             }
         }
     }
     public int countAliveCharacters
     {
-        get { return (int)PhotonNetwork.room.CustomProperties[CUSTOM_ROOM_COUNT_ALIVE_CHARACTERS]; }
+        get { try { return (int)PhotonNetwork.room.CustomProperties[CUSTOM_ROOM_COUNT_ALIVE_CHARACTERS]; } catch { } return 0; }
         set { if (PhotonNetwork.isMasterClient && value != countAliveCharacters) PhotonNetwork.room.SetCustomProperties(new Hashtable() { { CUSTOM_ROOM_COUNT_ALIVE_CHARACTERS, value } }); }
     }
     public int countAllCharacters
     {
-        get { return (int)PhotonNetwork.room.CustomProperties[CUSTOM_ROOM_COUNT_ALL_CHARACTERS]; }
+        get { try { return (int)PhotonNetwork.room.CustomProperties[CUSTOM_ROOM_COUNT_ALL_CHARACTERS]; } catch { } return 0; }
         set { if (PhotonNetwork.isMasterClient && value != countAllCharacters) PhotonNetwork.room.SetCustomProperties(new Hashtable() { { CUSTOM_ROOM_COUNT_ALL_CHARACTERS, value } }); }
     }
     #endregion
@@ -154,21 +154,17 @@ public class BRGameplayManager : GameplayManager
     private BRPattern randomedPattern;
     private bool isInSpawnableArea;
 
-    protected override void Awake()
+    protected override void OnStartServer()
     {
-        base.Awake();
-        if (PhotonNetwork.isMasterClient)
-        {
-            currentCircle = 0;
-            currentRadius = 0;
-            currentState = BRState.WaitingForPlayers;
-            currentDuration = currentCountdown = waitForPlayersDuration;
-            CurrentCircleHpRateDps = 0;
-            CurrentCountdown = 0;
-            SpawnerMoveCountdown = 0;
-            randomedPattern = patterns[Random.Range(0, patterns.Length)];
-            isInSpawnableArea = false;
-        }
+        currentCircle = 0;
+        currentRadius = 0;
+        currentState = BRState.WaitingForPlayers;
+        currentDuration = currentCountdown = waitForPlayersDuration;
+        CurrentCircleHpRateDps = 0;
+        CurrentCountdown = 0;
+        SpawnerMoveCountdown = 0;
+        randomedPattern = patterns[Random.Range(0, patterns.Length)];
+        isInSpawnableArea = false;
     }
 
     public override bool CanRespawn(CharacterEntity character)
@@ -211,7 +207,7 @@ public class BRGameplayManager : GameplayManager
         var gameRule = networkGameManager.gameRule == null ? null : networkGameManager.gameRule as BattleRoyaleNetworkGameRule;
         var characters = networkGameManager.Characters;
         countAliveCharacters = networkGameManager.CountAliveCharacters();
-        countAllCharacters = networkGameManager.maxConnections;
+        countAllCharacters = PhotonNetwork.room.MaxPlayers;
         BRCircle circle;
         switch (currentState)
         {

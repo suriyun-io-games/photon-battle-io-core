@@ -23,7 +23,6 @@ public class UIGameplay : MonoBehaviour
     public UIRandomAttributes randomAttributes;
     public GameObject matchEndUi;
     public GameObject[] mobileOnlyUis;
-    private bool isNetworkActiveDirty;
     private bool isRespawnShown;
     private bool isRandomedAttributesShown;
     private bool canRandomAttributes;

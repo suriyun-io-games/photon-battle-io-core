@@ -251,6 +251,8 @@ public class CharacterEntity : BaseNetworkGameCharacter
     protected Vector2 inputDirection;
     protected bool inputAttack;
     protected bool inputJump;
+    protected Vector3? previousPosition;
+    protected Vector3 currentVelocity;
 
     public bool isReady { get; private set; }
     public bool isDead { get; private set; }
@@ -416,7 +418,10 @@ public class CharacterEntity : BaseNetworkGameCharacter
             localPlayerObject.SetActive(false);
         }
         deathTime = Time.unscaledTime;
+    }
 
+    protected override void OnStartLocalPlayer()
+    {
         if (photonView.isMine)
         {
             var followCam = FindObjectOfType<FollowCamera>();
@@ -439,18 +444,18 @@ public class CharacterEntity : BaseNetworkGameCharacter
         base.OnPhotonPlayerConnected(newPlayer);
         if (!PhotonNetwork.isMasterClient)
             return;
-        photonView.RPC("RpcUpdateHp", PhotonTargets.Others, hp);
-        photonView.RPC("RpcUpdateExp", PhotonTargets.Others, exp);
-        photonView.RPC("RpcUpdateLevel", PhotonTargets.Others, level);
-        photonView.RPC("RpcUpdateStatPoint", PhotonTargets.Others, statPoint);
-        photonView.RPC("RpcUpdateWatchAdsCount", PhotonTargets.Others, watchAdsCount);
-        photonView.RPC("RpcUpdateSelectCharacter", PhotonTargets.All, selectCharacter);
-        photonView.RPC("RpcUpdateSelectHead", PhotonTargets.All, selectHead);
-        photonView.RPC("RpcUpdateSelectWeapon", PhotonTargets.All, selectWeapon);
-        photonView.RPC("RpcUpdateIsInvincible", PhotonTargets.Others, isInvincible);
-        photonView.RPC("RpcUpdateAttackingActionId", PhotonTargets.Others, attackingActionId);
-        photonView.RPC("RpcUpdateAddStats", PhotonTargets.Others, JsonUtility.ToJson(addStats));
-        photonView.RPC("RpcUpdateExtra", PhotonTargets.Others, extra);
+        photonView.RPC("RpcUpdateHp", newPlayer, hp);
+        photonView.RPC("RpcUpdateExp", newPlayer, exp);
+        photonView.RPC("RpcUpdateLevel", newPlayer, level);
+        photonView.RPC("RpcUpdateStatPoint", newPlayer, statPoint);
+        photonView.RPC("RpcUpdateWatchAdsCount", newPlayer, watchAdsCount);
+        photonView.RPC("RpcUpdateSelectCharacter", newPlayer, selectCharacter);
+        photonView.RPC("RpcUpdateSelectHead", newPlayer, selectHead);
+        photonView.RPC("RpcUpdateSelectWeapon", newPlayer, selectWeapon);
+        photonView.RPC("RpcUpdateIsInvincible", newPlayer, isInvincible);
+        photonView.RPC("RpcUpdateAttackingActionId", newPlayer, attackingActionId);
+        photonView.RPC("RpcUpdateAddStats", newPlayer, JsonUtility.ToJson(addStats));
+        photonView.RPC("RpcUpdateExtra", newPlayer, extra);
     }
 
     protected override void Update()
@@ -473,7 +478,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
         if (invincibleEffect != null)
             invincibleEffect.SetActive(isInvincible);
         if (nameText != null)
-            nameText.text = photonView.owner.NickName;
+            nameText.text = playerName;
         if (hpBarContainer != null)
             hpBarContainer.gameObject.SetActive(hp > 0);
         if (hpFillImage != null)
@@ -488,6 +493,12 @@ public class CharacterEntity : BaseNetworkGameCharacter
 
     private void FixedUpdate()
     {
+        if (!previousPosition.HasValue)
+            previousPosition = TempTransform.position;
+        var currentMove = TempTransform.position - previousPosition.Value;
+        currentVelocity = currentMove / Time.deltaTime;
+        previousPosition = TempTransform.position;
+
         if (NetworkManager != null && NetworkManager.IsMatchEnded)
             return;
 
@@ -558,7 +569,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
         }
         else
         {
-            var velocity = TempRigidbody.velocity;
+            var velocity = currentVelocity;
             var xzMagnitude = new Vector3(velocity.x, 0, velocity.z).magnitude;
             var ySpeed = velocity.y;
             animator.SetBool("IsDead", false);
@@ -821,6 +832,24 @@ public class CharacterEntity : BaseNetworkGameCharacter
         isPlayingAttackAnim = false;
         isDead = false;
         Hp = TotalHp;
+    }
+
+    public void CmdInit(string selectHead, string selectCharacter, string selectWeapon, string extra)
+    {
+        photonView.RPC("RpcServerInit", PhotonTargets.MasterClient, selectHead, selectCharacter, selectWeapon, extra);
+    }
+
+    [PunRPC]
+    protected void RpcServerInit(string selectHead, string selectCharacter, string selectWeapon, string extra)
+    {
+        Hp = TotalHp;
+        this.selectHead = selectHead;
+        this.selectCharacter = selectCharacter;
+        this.selectWeapon = selectWeapon;
+        this.extra = extra;
+        var networkManager = BaseNetworkGameManager.Singleton;
+        if (networkManager != null)
+            networkManager.RegisterCharacter(this);
     }
     
     public void CmdReady()

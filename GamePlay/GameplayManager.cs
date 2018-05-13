@@ -12,6 +12,7 @@ public class GameplayManager : PunBehaviour
         public string currencyId;
         public IntAttribute amount;
     }
+    public const int UNIQUE_VIEW_ID = 998;
     public const float REAL_MOVE_SPEED_RATE = 0.1f;
     public static GameplayManager Singleton { get; private set; }
     [Header("Character stats")]
@@ -60,15 +61,27 @@ public class GameplayManager : PunBehaviour
         {
             attributes[availableAttribute.name] = availableAttribute;
         }
+        // Set unique view id
+        PhotonView view = GetComponent<PhotonView>();
+        if (view == null)
+            view = gameObject.AddComponent<PhotonView>();
+        view.viewID = UNIQUE_VIEW_ID;
+    }
+
+    protected virtual void Start()
+    {
         if (PhotonNetwork.isMasterClient)
+            OnStartServer();
+    }
+    
+    protected virtual void OnStartServer()
+    {
+        foreach (var powerUp in powerUps)
         {
-            foreach (var powerUp in powerUps)
-            {
-                if (powerUp.powerUpPrefab == null)
-                    continue;
-                for (var i = 0; i < powerUp.amount; ++i)
-                    SpawnPowerUp(powerUp.powerUpPrefab.name);
-            }
+            if (powerUp.powerUpPrefab == null)
+                continue;
+            for (var i = 0; i < powerUp.amount; ++i)
+                SpawnPowerUp(powerUp.powerUpPrefab.name);
         }
     }
 
@@ -78,7 +91,7 @@ public class GameplayManager : PunBehaviour
             return;
         PowerUpEntity powerUpPrefab = null;
         if (powerUpEntities.TryGetValue(prefabName, out powerUpPrefab)) {
-            var powerUpEntityGo = PhotonNetwork.Instantiate(powerUpPrefab.name, GetPowerUpSpawnPosition(), Quaternion.identity, 0);
+            var powerUpEntityGo = PhotonNetwork.InstantiateSceneObject(powerUpPrefab.name, GetPowerUpSpawnPosition(), Quaternion.identity, 0, new object[0]);
             var powerUpEntity = powerUpEntityGo.GetComponent<PowerUpEntity>();
             powerUpEntity.prefabName = prefabName;
         }

@@ -2,16 +2,22 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Photon;
-using Hashtable = ExitGames.Client.Photon.Hashtable;
 
 [RequireComponent(typeof(CharacterEntity))]
 public class BRCharacterEntityExtra : PunBehaviour
 {
-    public const string CUSTOM_PLAYER_IS_SPAWNED = "bSPAWNED";
+    protected bool _isSpawned;
     public bool isSpawned
     {
-        get { return (bool)photonView.owner.CustomProperties[CUSTOM_PLAYER_IS_SPAWNED]; }
-        set { if (PhotonNetwork.isMasterClient && value != isSpawned) photonView.owner.SetCustomProperties(new Hashtable() { { CUSTOM_PLAYER_IS_SPAWNED, value } }); }
+        get { return _isSpawned; }
+        set
+        {
+            if (PhotonNetwork.isMasterClient && value != _isSpawned)
+            {
+                _isSpawned = value;
+                photonView.RPC("RpcUpdateIsSpawned", PhotonTargets.Others, value);
+            }
+        }
     }
 
     private Transform tempTransform;
@@ -41,6 +47,8 @@ public class BRCharacterEntityExtra : PunBehaviour
     private float lastCircleCheckTime;
     private bool disableRenderers;
 
+    public bool IsMine { get { return photonView.isMine && !(TempCharacterEntity is BotEntity); } }
+
     private void Awake()
     {
         TempCharacterEntity.enabled = false;
@@ -50,7 +58,7 @@ public class BRCharacterEntityExtra : PunBehaviour
             maxRandomDist = brGameManager.spawnerMoveDuration * 0.25f;
         botRandomSpawn = Random.Range(0f, maxRandomDist);
 
-        if (photonView.isMine)
+        if (IsMine)
         {
             if (brGameManager != null && brGameManager.currentState != BRState.WaitingForPlayers)
                 GameNetworkManager.Singleton.LeaveRoom();
@@ -65,6 +73,14 @@ public class BRCharacterEntityExtra : PunBehaviour
     private void OnDestroy()
     {
         TempCharacterEntity.onDead -= OnDead;
+    }
+
+    public override void OnPhotonPlayerConnected(PhotonPlayer newPlayer)
+    {
+        base.OnPhotonPlayerConnected(newPlayer);
+        if (!PhotonNetwork.isMasterClient)
+            return;
+        photonView.RPC("RpcUpdateIsSpawned", newPlayer, isSpawned);
     }
 
     private void Update()
@@ -97,7 +113,7 @@ public class BRCharacterEntityExtra : PunBehaviour
                 TempCharacterEntity.TempRigidbody.useGravity = false;
             if (TempCharacterEntity.enabled)
                 TempCharacterEntity.enabled = false;
-            if (PhotonNetwork.isMasterClient || photonView.isMine)
+            if (PhotonNetwork.isMasterClient || IsMine)
             {
                 TempTransform.position = brGameManager.GetSpawnerPosition();
                 TempTransform.rotation = brGameManager.GetSpawnerRotation();
@@ -163,7 +179,7 @@ public class BRCharacterEntityExtra : PunBehaviour
             return;
         var brGameplayManager = GameplayManager.Singleton as BRGameplayManager;
         if (brGameplayManager != null)
-            RpcRankResult(BaseNetworkGameManager.Singleton.CountAliveCharacters() + 1);
+            photonView.RPC("RpcRankResult", photonView.owner, BaseNetworkGameManager.Singleton.CountAliveCharacters() + 1);
     }
 
     IEnumerator ShowRankResultRoutine(int rank)
@@ -182,7 +198,7 @@ public class BRCharacterEntityExtra : PunBehaviour
         if (!isSpawned && brGameplayManager != null)
         {
             isSpawned = true;
-            RpcCharacterSpawned(brGameplayManager.SpawnCharacter(TempCharacterEntity) + new Vector3(Random.Range(-2.5f, 2.5f), 0, Random.Range(-2.5f, 2.5f)));
+            photonView.RPC("RpcCharacterSpawned", PhotonTargets.All, brGameplayManager.SpawnCharacter(TempCharacterEntity) + new Vector3(Random.Range(-2.5f, 2.5f), 0, Random.Range(-2.5f, 2.5f)));
         }
     }
     
@@ -192,7 +208,7 @@ public class BRCharacterEntityExtra : PunBehaviour
     }
     
     [PunRPC]
-    public void RpcServerCharacterSpawn()
+    protected void RpcServerCharacterSpawn()
     {
         var brGameplayManager = GameplayManager.Singleton as BRGameplayManager;
         if (!isSpawned && brGameplayManager != null && brGameplayManager.CanSpawnCharacter(TempCharacterEntity))
@@ -200,7 +216,7 @@ public class BRCharacterEntityExtra : PunBehaviour
     }
 
     [PunRPC]
-    public void RpcCharacterSpawned(Vector3 spawnPosition)
+    protected void RpcCharacterSpawned(Vector3 spawnPosition)
     {
         TempCharacterEntity.TempTransform.position = spawnPosition;
         TempCharacterEntity.TempRigidbody.useGravity = true;
@@ -208,9 +224,15 @@ public class BRCharacterEntityExtra : PunBehaviour
     }
 
     [PunRPC]
-    public void RpcRankResult(int rank)
+    protected virtual void RpcRankResult(int rank)
     {
-        if (photonView.isMine)
+        if (IsMine)
             StartCoroutine(ShowRankResultRoutine(rank));
+    }
+
+    [PunRPC]
+    protected virtual void RpcUpdateIsSpawned(bool isSpawned)
+    {
+        _isSpawned = isSpawned;
     }
 }

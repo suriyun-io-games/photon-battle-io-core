@@ -116,6 +116,6 @@ public class TrapEntity : PunBehaviour
 
         TriggerredTime[characterViewId] = time;
         character.Hp -= triggeredDamage;
-        character.photonView.RPC("RpcEffect", PhotonTargets.All, character.photonView.viewID, CharacterEntity.RPC_EFFECT_TRAP_HIT);
+        character.photonView.RPC("RpcEffect", PhotonTargets.All, photonView.viewID, CharacterEntity.RPC_EFFECT_TRAP_HIT);
     }
 }

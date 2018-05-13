@@ -7,8 +7,19 @@ public class PowerUpEntity : PunBehaviour
 {
     public const float DestroyDelay = 1f;
     // We're going to respawn this power up so I decide to keep its prefab name to spawning when character triggered
-    [HideInInspector]
-    public string prefabName;
+    protected string _prefabName;
+    public virtual string prefabName
+    {
+        get { return _prefabName; }
+        set
+        {
+            if (PhotonNetwork.isMasterClient && value != prefabName)
+            {
+                _prefabName = value;
+                photonView.RPC("RpcUpdatePrefabName", PhotonTargets.Others, value);
+            }
+        }
+    }
     public int hp;
     public int exp;
     public WeaponData changingWeapon;
@@ -20,6 +31,14 @@ public class PowerUpEntity : PunBehaviour
     {
         var collider = GetComponent<Collider>();
         collider.isTrigger = true;
+    }
+
+    public override void OnPhotonPlayerConnected(PhotonPlayer newPlayer)
+    {
+        base.OnPhotonPlayerConnected(newPlayer);
+        if (!PhotonNetwork.isMasterClient)
+            return;
+        photonView.RPC("RpcUpdatePrefabName", newPlayer, prefabName);
     }
 
     private void OnTriggerEnter(Collider other)
@@ -57,5 +76,11 @@ public class PowerUpEntity : PunBehaviour
             PhotonNetwork.Destroy(gameObject);
             GameplayManager.Singleton.SpawnPowerUp(prefabName);
         }
+    }
+
+    [PunRPC]
+    protected virtual void RpcUpdatePrefabName(string prefabName)
+    {
+        _prefabName = prefabName;
     }
 }

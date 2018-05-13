@@ -32,6 +32,7 @@ public enum BRState : byte
 
 public class BRGameplayManager : GameplayManager
 {
+    public const string CUSTOM_ROOM_CURRENT_PATTERN = "iCP";
     public const string CUSTOM_ROOM_CURRENT_CIRCLE = "iCC";
     public const string CUSTOM_ROOM_CURRENT_RADIUS = "fCR";
     public const string CUSTOM_ROOM_CURRENT_CENTER_POSITION = "v3CCP";
@@ -55,6 +56,11 @@ public class BRGameplayManager : GameplayManager
     public GameObject circleObject;
 
     #region Sync Vars
+    public int currentPattern
+    {
+        get { try { return (int)PhotonNetwork.room.CustomProperties[CUSTOM_ROOM_CURRENT_PATTERN]; } catch { } return 0; }
+        set { if (PhotonNetwork.isMasterClient && value != currentPattern) PhotonNetwork.room.SetCustomProperties(new Hashtable() { { CUSTOM_ROOM_CURRENT_PATTERN, value } }); }
+    }
     public int currentCircle
     {
         get { try { return (int)PhotonNetwork.room.CustomProperties[CUSTOM_ROOM_CURRENT_CIRCLE]; } catch { } return 0; }
@@ -151,11 +157,12 @@ public class BRGameplayManager : GameplayManager
     private float currentShrinkDuration;
     private float startShrinkRadius;
     private Vector3 startShrinkCenterPosition;
-    private BRPattern randomedPattern;
     private bool isInSpawnableArea;
+    private BRPattern randomedPattern { get { return patterns[currentPattern]; } }
 
     protected override void OnStartServer()
     {
+        currentPattern = Random.Range(0, patterns.Length);
         currentCircle = 0;
         currentRadius = 0;
         currentState = BRState.WaitingForPlayers;
@@ -163,7 +170,6 @@ public class BRGameplayManager : GameplayManager
         CurrentCircleHpRateDps = 0;
         CurrentCountdown = 0;
         SpawnerMoveCountdown = 0;
-        randomedPattern = patterns[Random.Range(0, patterns.Length)];
         isInSpawnableArea = false;
     }
 

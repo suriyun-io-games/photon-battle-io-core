@@ -260,6 +260,25 @@ public class CharacterEntity : BaseNetworkGameCharacter
     public bool isPlayingAttackAnim { get; private set; }
     public float deathTime { get; private set; }
     public float invincibleTime { get; private set; }
+    
+    private bool isHidding;
+    public bool IsHidding
+    {
+        get { return isHidding; }
+        set
+        {
+            if (isHidding == value)
+                return;
+
+            isHidding = value;
+            var renderers = GetComponentsInChildren<Renderer>();
+            foreach (var renderer in renderers)
+                renderer.enabled = !isHidding;
+            var canvases = GetComponentsInChildren<Canvas>();
+            foreach (var canvas in canvases)
+                canvas.enabled = !isHidding;
+        }
+    }
 
     private Transform tempTransform;
     public Transform TempTransform
@@ -791,6 +810,15 @@ public class CharacterEntity : BaseNetworkGameCharacter
         selectWeapon = weaponData.GetId();
     }
     
+    public void UpdateCharacterModelHiddingState()
+    {
+        if (characterModel == null)
+            return;
+        var renderers = characterModel.GetComponentsInChildren<Renderer>();
+        foreach (var renderer in renderers)
+            renderer.enabled = !IsHidding;
+    }
+
     public virtual void OnSpawn() { }
     
     public void ServerInvincible()
@@ -1024,6 +1052,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
         if (weaponData != null)
             characterModel.SetWeaponModel(weaponData.rightHandObject, weaponData.leftHandObject, weaponData.shieldObject);
         characterModel.gameObject.SetActive(true);
+        UpdateCharacterModelHiddingState();
     }
     [PunRPC]
     protected virtual void RpcUpdateSelectHead(string selectHead)
@@ -1032,6 +1061,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
         headData = GameInstance.GetHead(selectHead);
         if (characterModel != null && headData != null)
             characterModel.SetHeadModel(headData.modelObject);
+        UpdateCharacterModelHiddingState();
     }
     [PunRPC]
     protected virtual void RpcUpdateSelectWeapon(string selectWeapon)
@@ -1040,6 +1070,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
         weaponData = GameInstance.GetWeapon(selectWeapon);
         if (characterModel != null && weaponData != null)
             characterModel.SetWeaponModel(weaponData.rightHandObject, weaponData.leftHandObject, weaponData.shieldObject);
+        UpdateCharacterModelHiddingState();
     }
     [PunRPC]
     protected virtual void RpcUpdateIsInvincible(bool isInvincible)

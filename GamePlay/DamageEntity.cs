@@ -187,7 +187,7 @@ public class DamageEntity : MonoBehaviour
     public float GetAttackRange()
     {
         // s = v * t
-        return (TempRigidbody.velocity.magnitude * lifeTime) + (radius / 2);
+        return (speed * lifeTime * GameplayManager.REAL_MOVE_SPEED_RATE) + (radius / 2);
     }
 
     public Vector3 GetForwardVelocity()

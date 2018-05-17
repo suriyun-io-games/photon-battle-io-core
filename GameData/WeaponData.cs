@@ -19,7 +19,7 @@ public class WeaponData : ItemData
 
     public void Launch(CharacterEntity attacker, bool isLeftHandWeapon)
     {
-        if (attacker == null)
+        if (attacker == null || !PhotonNetwork.isMasterClient)
             return;
 
         var gameNetworkManager = GameNetworkManager.Singleton;

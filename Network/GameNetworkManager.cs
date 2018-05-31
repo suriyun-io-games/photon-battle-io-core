@@ -53,4 +53,11 @@ public class GameNetworkManager : BaseNetworkGameManager
         if (uiGameplay != null)
             uiGameplay.UpdateRankings(scores);
     }
+
+    protected override void KillNotify(string killerName, string victimName, string weaponId)
+    {
+        var uiGameplay = FindObjectOfType<UIGameplay>();
+        if (uiGameplay != null)
+            uiGameplay.KillNotify(killerName, victimName, weaponId);
+    }
 }

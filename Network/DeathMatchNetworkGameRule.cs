@@ -16,14 +16,30 @@ public class DeathMatchNetworkGameRule : IONetworkGameRule
     public override bool ShowZeroDieCountWhenDead { get { return false; } }
 
     protected bool endMatchCalled;
+    protected bool isLeavingRoom;
+    protected Coroutine endMatchCoroutine;
 
     protected override void EndMatch()
     {
         if (!endMatchCalled)
         {
-            networkManager.StartCoroutine(EndMatchRoutine());
+            isLeavingRoom = true;
+            endMatchCoroutine = networkManager.StartCoroutine(EndMatchRoutine());
             endMatchCalled = true;
         }
+    }
+
+    public override void OnStartServer(BaseNetworkGameManager manager)
+    {
+        base.OnStartServer(manager);
+        endMatchCalled = false;
+    }
+
+    public override void OnStopConnection(BaseNetworkGameManager manager)
+    {
+        base.OnStopConnection(manager);
+        isLeavingRoom = false;
+        networkManager.StopCoroutine(endMatchCoroutine);
     }
 
     IEnumerator EndMatchRoutine()
@@ -34,7 +50,8 @@ public class DeathMatchNetworkGameRule : IONetworkGameRule
             yield return new WaitForSeconds(1);
             --EndMatchCountingDown;
         }
-        networkManager.LeaveRoom();
+        if (isLeavingRoom)
+            networkManager.LeaveRoom();
     }
 
     public override bool RespawnCharacter(BaseNetworkGameCharacter character, params object[] extraParams)

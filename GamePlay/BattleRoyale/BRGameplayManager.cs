@@ -188,6 +188,9 @@ public class BRGameplayManager : GameplayManager
 
     private void Update()
     {
+        var networkGameManager = BaseNetworkGameManager.Singleton;
+        if (!PhotonNetwork.isMasterClient)
+            networkGameManager.maxConnections = (byte)countAllCharacters;
         UpdateGameState();
         UpdateCircle();
         UpdateSpawner();

@@ -4,7 +4,8 @@ using UnityEngine;
 
 public class BattleRoyaleNetworkGameRule : IONetworkGameRule
 {
-    public bool fillBots;
+    [Tooltip("Maximum amount of bots will be filled when start game")]
+    public int fillBots = 10;
     public int endMatchCountDown = 10;
     public int EndMatchCountingDown { get; protected set; }
     public override bool HasOptionBotCount { get { return false; } }
@@ -16,9 +17,31 @@ public class BattleRoyaleNetworkGameRule : IONetworkGameRule
     public override bool ShowZeroAssistCountWhenDead { get { return false; } }
     public override bool ShowZeroDieCountWhenDead { get { return false; } }
 
+    protected bool endMatchCalled;
+    protected bool isLeavingRoom;
+    protected Coroutine endMatchCoroutine;
+
     protected override void EndMatch()
     {
-        networkManager.StartCoroutine(EndMatchRoutine());
+        if (!endMatchCalled)
+        {
+            isLeavingRoom = true;
+            endMatchCoroutine = networkManager.StartCoroutine(EndMatchRoutine());
+            endMatchCalled = true;
+        }
+    }
+
+    public override void OnStartServer(BaseNetworkGameManager manager)
+    {
+        base.OnStartServer(manager);
+        endMatchCalled = false;
+    }
+
+    public override void OnStopConnection(BaseNetworkGameManager manager)
+    {
+        base.OnStopConnection(manager);
+        isLeavingRoom = false;
+        networkManager.StopCoroutine(endMatchCoroutine);
     }
 
     IEnumerator EndMatchRoutine()
@@ -29,7 +52,8 @@ public class BattleRoyaleNetworkGameRule : IONetworkGameRule
             yield return new WaitForSeconds(1);
             --EndMatchCountingDown;
         }
-        networkManager.LeaveRoom();
+        if (isLeavingRoom)
+            networkManager.LeaveRoom();
     }
 
     public override bool RespawnCharacter(BaseNetworkGameCharacter character, params object[] extraParams)
@@ -78,10 +102,12 @@ public class BattleRoyaleNetworkGameRule : IONetworkGameRule
 
     public override void AddBots()
     {
-        if (!fillBots)
+        if (fillBots <= 0)
             return;
 
         var botCount = networkManager.maxConnections - networkManager.Characters.Count;
+        if (botCount > fillBots)
+            botCount = fillBots;
         for (var i = 0; i < botCount; ++i)
         {
             var character = NewBot();

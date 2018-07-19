@@ -28,12 +28,6 @@ public class BotEntity : CharacterEntity
     public float randomMoveDistance = 5f;
     public float detectEnemyDistance = 2f;
     public float turnSpeed = 5f;
-    public bool useCustomMoveSpeed;
-    public float customMoveSpeed;
-    public CharacterModel fixCharacterModel;
-    public CharacterData fixCharacterData;
-    public HeadData fixHeadData;
-    public WeaponData fixWeaponData;
     public Characteristic characteristic;
     public CharacterStats startAddStats;
     private Vector3 targetPosition;
@@ -117,11 +111,6 @@ public class BotEntity : CharacterEntity
         TempTransform.rotation = Quaternion.Lerp(TempTransform.rotation, Quaternion.Euler(0, targetRotation.eulerAngles.y, 0), Time.deltaTime * turnSpeed);
     }
 
-    protected override float GetMoveSpeed()
-    {
-        return (useCustomMoveSpeed ? customMoveSpeed : TotalMoveSpeed) * GameplayManager.REAL_MOVE_SPEED_RATE;
-    }
-
     private bool IsReachedTargetPosition()
     {
         return Vector3.Distance(targetPosition, TempTransform.position) < ReachedTargetDistance;
@@ -155,62 +144,6 @@ public class BotEntity : CharacterEntity
         base.OnSpawn();
         addStats += startAddStats;
         Hp = TotalHp;
-    }
-
-    [PunRPC]
-    protected override void RpcUpdateSelectCharacter(string value)
-    {
-        if (fixCharacterModel != null && fixCharacterData != null)
-        {
-            _selectCharacter = fixCharacterData.GetId();
-            characterData = fixCharacterData;
-            characterModel = fixCharacterModel;
-            if (headData != null)
-                characterModel.SetHeadModel(headData.modelObject);
-            if (weaponData != null)
-                characterModel.SetWeaponModel(weaponData.rightHandObject, weaponData.leftHandObject, weaponData.shieldObject);
-        }
-        else if (fixCharacterData != null)
-        {
-            _selectCharacter = fixCharacterData.GetId();
-            base.RpcUpdateSelectCharacter(_selectCharacter);
-        }
-        else if (fixCharacterModel != null)
-        {
-            _selectCharacter = value;
-            characterData = GameInstance.GetCharacter(value);
-            characterModel = fixCharacterModel;
-            if (headData != null)
-                characterModel.SetHeadModel(headData.modelObject);
-            if (weaponData != null)
-                characterModel.SetWeaponModel(weaponData.rightHandObject, weaponData.leftHandObject, weaponData.shieldObject);
-        }
-        else
-            base.RpcUpdateSelectCharacter(value);
-    }
-
-    [PunRPC]
-    protected override void RpcUpdateSelectHead(string value)
-    {
-        if (fixHeadData != null)
-        {
-            _selectHead = fixHeadData.GetId();
-            base.RpcUpdateSelectHead(_selectHead);
-        }
-        else
-            base.RpcUpdateSelectHead(value);
-    }
-
-    [PunRPC]
-    protected override void RpcUpdateSelectWeapon(string value)
-    {
-        if (fixWeaponData != null)
-        {
-            _selectWeapon = fixWeaponData.GetId();
-            base.RpcUpdateSelectWeapon(_selectWeapon);
-        }
-        else
-            base.RpcUpdateSelectWeapon(value);
     }
 
     [PunRPC]

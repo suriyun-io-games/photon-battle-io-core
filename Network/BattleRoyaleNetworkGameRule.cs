@@ -41,7 +41,6 @@ public class BattleRoyaleNetworkGameRule : IONetworkGameRule
     {
         base.OnStopConnection(manager);
         isLeavingRoom = false;
-        networkManager.StopCoroutine(endMatchCoroutine);
     }
 
     IEnumerator EndMatchRoutine()

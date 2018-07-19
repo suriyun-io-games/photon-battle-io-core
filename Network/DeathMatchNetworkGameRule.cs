@@ -39,7 +39,6 @@ public class DeathMatchNetworkGameRule : IONetworkGameRule
     {
         base.OnStopConnection(manager);
         isLeavingRoom = false;
-        networkManager.StopCoroutine(endMatchCoroutine);
     }
 
     IEnumerator EndMatchRoutine()

@@ -20,9 +20,12 @@ public class PowerUpEntity : PunBehaviour
             }
         }
     }
+    [Header("Recovery / Currencies")]
     public int hp;
     public int exp;
     public WeaponData changingWeapon;
+    public InGameCurrency[] currencies;
+    [Header("Effect")]
     public EffectEntity powerUpEffect;
 
     private bool isDead;
@@ -57,6 +60,13 @@ public class PowerUpEntity : PunBehaviour
                 character.Exp += Mathf.CeilToInt(exp * character.TotalExpRate);
                 if (changingWeapon != null)
                     character.ChangeWeapon(changingWeapon);
+            }
+            if (character.photonView.isMine)
+            {
+                foreach (var currency in currencies)
+                {
+                    MonetizationManager.Save.AddCurrency(currency.id, currency.amount);
+                }
             }
             StartCoroutine(DestroyRoutine());
         }

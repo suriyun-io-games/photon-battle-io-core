@@ -39,6 +39,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
     protected int _attackingActionId;
     protected CharacterStats _addStats;
     protected string _extra;
+    protected string _defaultSelectWeapon;
 
     public virtual int hp
     {
@@ -233,6 +234,18 @@ public class CharacterEntity : BaseNetworkGameCharacter
             }
         }
     }
+    public virtual string defaultSelectWeapon
+    {
+        get { return _defaultSelectWeapon; }
+        set
+        {
+            if (PhotonNetwork.isMasterClient && value != _defaultSelectWeapon)
+            {
+                _defaultSelectWeapon = value;
+                photonView.RPC("RpcUpdateDefaultSelectWeapon", PhotonTargets.Others, value);
+            }
+        }
+    }
     #endregion
 
     public override bool IsDead
@@ -301,7 +314,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
         }
     }
 
-    public CharacterStats SumAddStats
+    public virtual CharacterStats SumAddStats
     {
         get
         {
@@ -317,7 +330,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
         }
     }
 
-    public int TotalHp
+    public virtual int TotalHp
     {
         get
         {
@@ -326,7 +339,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
         }
     }
 
-    public int TotalAttack
+    public virtual int TotalAttack
     {
         get
         {
@@ -335,7 +348,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
         }
     }
 
-    public int TotalDefend
+    public virtual int TotalDefend
     {
         get
         {
@@ -344,7 +357,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
         }
     }
 
-    public int TotalMoveSpeed
+    public virtual int TotalMoveSpeed
     {
         get
         {
@@ -353,7 +366,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
         }
     }
 
-    public float TotalExpRate
+    public virtual float TotalExpRate
     {
         get
         {
@@ -362,7 +375,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
         }
     }
 
-    public float TotalScoreRate
+    public virtual float TotalScoreRate
     {
         get
         {
@@ -371,7 +384,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
         }
     }
 
-    public float TotalHpRecoveryRate
+    public virtual float TotalHpRecoveryRate
     {
         get
         {
@@ -380,7 +393,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
         }
     }
 
-    public float TotalDamageRateLeechHp
+    public virtual float TotalDamageRateLeechHp
     {
         get
         {
@@ -389,7 +402,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
         }
     }
 
-    public int TotalSpreadDamages
+    public virtual int TotalSpreadDamages
     {
         get
         {
@@ -401,6 +414,16 @@ public class CharacterEntity : BaseNetworkGameCharacter
             else
                 return maxValue;
         }
+    }
+
+    public virtual int RewardExp
+    {
+        get { return GameplayManager.Singleton.GetRewardExp(level); }
+    }
+
+    public virtual int KillScore
+    {
+        get { return GameplayManager.Singleton.GetKillScore(level); }
     }
 
     protected override void Init()
@@ -787,8 +810,8 @@ public class CharacterEntity : BaseNetworkGameCharacter
         var gameplayManager = GameplayManager.Singleton;
         var targetLevel = target.level;
         var maxLevel = gameplayManager.maxLevel;
-        Exp += Mathf.CeilToInt(gameplayManager.GetRewardExp(targetLevel) * TotalExpRate);
-        score += Mathf.CeilToInt(gameplayManager.GetKillScore(targetLevel) * TotalScoreRate);
+        Exp += Mathf.CeilToInt(target.RewardExp * TotalExpRate);
+        score += Mathf.CeilToInt(target.KillScore * TotalScoreRate);
         foreach (var rewardCurrency in gameplayManager.rewardCurrencies)
         {
             var currencyId = rewardCurrency.currencyId;
@@ -833,6 +856,11 @@ public class CharacterEntity : BaseNetworkGameCharacter
             renderer.enabled = !IsHidding;
     }
 
+    public virtual Vector3 GetSpawnPosition()
+    {
+        return GameplayManager.Singleton.GetCharacterSpawnPosition();
+    }
+
     public virtual void OnSpawn() { }
     
     public void ServerInvincible()
@@ -852,7 +880,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
             var gameplayManager = GameplayManager.Singleton;
             ServerInvincible();
             OnSpawn();
-            var position = gameplayManager.GetCharacterSpawnPosition(this);
+            var position = GetSpawnPosition();
             TempTransform.position = position;
             photonView.RPC("RpcTargetSpawn", photonView.owner, position.x, position.y, position.z);
             ServerRevive();
@@ -871,6 +899,8 @@ public class CharacterEntity : BaseNetworkGameCharacter
     {
         if (!PhotonNetwork.isMasterClient)
             return;
+        if (!string.IsNullOrEmpty(defaultSelectWeapon))
+            selectWeapon = defaultSelectWeapon;
         isPlayingAttackAnim = false;
         isDead = false;
         Hp = TotalHp;
@@ -1081,6 +1111,11 @@ public class CharacterEntity : BaseNetworkGameCharacter
     protected virtual void RpcUpdateSelectWeapon(string selectWeapon)
     {
         _selectWeapon = selectWeapon;
+        if (PhotonNetwork.isMasterClient)
+        {
+            if (string.IsNullOrEmpty(defaultSelectWeapon))
+                defaultSelectWeapon = selectWeapon;
+        }
         weaponData = GameInstance.GetWeapon(selectWeapon);
         if (characterModel != null && weaponData != null)
             characterModel.SetWeaponModel(weaponData.rightHandObject, weaponData.leftHandObject, weaponData.shieldObject);
@@ -1105,6 +1140,11 @@ public class CharacterEntity : BaseNetworkGameCharacter
     protected virtual void RpcUpdateExtra(string extra)
     {
         _extra = extra;
+    }
+    [PunRPC]
+    protected virtual void RpcUpdateDefaultSelectWeapon(string defaultSelectWeapon)
+    {
+        _defaultSelectWeapon = defaultSelectWeapon;
     }
     #endregion
 }

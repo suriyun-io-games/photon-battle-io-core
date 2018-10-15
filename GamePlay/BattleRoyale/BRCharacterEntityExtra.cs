@@ -86,6 +86,21 @@ public class BRCharacterEntityExtra : PunBehaviour
     private void Update()
     {
         var brGameManager = GameplayManager.Singleton as BRGameplayManager;
+        if (brGameManager == null)
+            return;
+        // Monster entity does not have to move following the air plane
+        if (PhotonNetwork.isMasterClient && TempCharacterEntity is MonsterEntity)
+        {
+            if (!TempCharacterEntity.TempRigidbody.useGravity)
+                TempCharacterEntity.TempRigidbody.useGravity = true;
+            if (!TempCharacterEntity.enabled)
+                TempCharacterEntity.enabled = true;
+            TempCharacterEntity.IsHidding = false;
+            if (brGameManager.currentState != BRState.WaitingForPlayers && !isSpawned)
+                isSpawned = true;
+            return;
+        }
+
         if (PhotonNetwork.isMasterClient)
         {
             if (brGameManager.currentState != BRState.WaitingForPlayers && Time.realtimeSinceStartup - lastCircleCheckTime >= 1f)
@@ -102,6 +117,7 @@ public class BRCharacterEntityExtra : PunBehaviour
                 lastCircleCheckTime = Time.realtimeSinceStartup;
             }
         }
+
         if (brGameManager.currentState != BRState.WaitingForPlayers && !isSpawned)
         {
             if (PhotonNetwork.isMasterClient && !botSpawnCalled && TempCharacterEntity is BotEntity && brGameManager.CanSpawnCharacter(TempCharacterEntity))

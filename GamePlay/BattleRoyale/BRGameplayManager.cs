@@ -393,8 +393,7 @@ public class BRGameplayManager : GameplayManager
 
     public Vector3 SpawnCharacter(CharacterEntity character)
     {
-        var spawnPosition = character.TempTransform.position = GetSpawnerPosition();
-        return spawnPosition;
+        return character.TempTransform.position = GetSpawnerPosition();
     }
 
     [PunRPC]

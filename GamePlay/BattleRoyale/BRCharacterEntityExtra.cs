@@ -19,6 +19,7 @@ public class BRCharacterEntityExtra : PunBehaviour
             }
         }
     }
+    public bool isGroundOnce { get; private set; }
 
     private Transform tempTransform;
     public Transform TempTransform
@@ -179,7 +180,19 @@ public class BRCharacterEntityExtra : PunBehaviour
         if (ui != null)
             ui.ShowRankResult(rank);
     }
-    
+
+    protected virtual void OnCollisionEnter(Collision collision)
+    {
+        if (isSpawned && !isGroundOnce && collision.impulse.y > 0)
+            isGroundOnce = true;
+    }
+
+    protected virtual void OnCollisionStay(Collision collision)
+    {
+        if (isSpawned && !isGroundOnce && collision.impulse.y > 0)
+            isGroundOnce = true;
+    }
+
     public void ServerCharacterSpawn()
     {
         if (!PhotonNetwork.isMasterClient)

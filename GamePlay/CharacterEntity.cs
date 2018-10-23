@@ -694,7 +694,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
         Move(isDashing ? dashDirection : moveDirection);
         Rotate(isDashing ? dashInputMove : inputDirection);
 
-        if (inputAttack)
+        if (inputAttack && GameplayManager.Singleton.CanAttack(this))
             Attack();
         else
             StopAttack();
@@ -808,10 +808,13 @@ public class CharacterEntity : BaseNetworkGameCharacter
     public void ReceiveDamage(CharacterEntity attacker, int damage)
     {
         var gameplayManager = GameplayManager.Singleton;
-        if (Hp <= 0 || isInvincible || !gameplayManager.CanReceiveDamage(this))
+        if (Hp <= 0 || isInvincible)
             return;
 
         photonView.RPC("RpcEffect", PhotonTargets.All, attacker.photonView.viewID, RPC_EFFECT_DAMAGE_HIT);
+        if (!gameplayManager.CanReceiveDamage(this))
+            return;
+
         int reduceHp = damage - TotalDefend;
         if (reduceHp < 0)
             reduceHp = 0;
@@ -946,14 +949,27 @@ public class CharacterEntity : BaseNetworkGameCharacter
     [PunRPC]
     protected void RpcServerInit(string selectHead, string selectCharacter, string selectWeapon, string extra)
     {
-        Hp = TotalHp;
-        this.selectHead = selectHead;
-        this.selectCharacter = selectCharacter;
-        this.selectWeapon = selectWeapon;
-        this.extra = extra;
+        var alreadyInit = false;
         var networkManager = BaseNetworkGameManager.Singleton;
         if (networkManager != null)
+        {
             networkManager.RegisterCharacter(this);
+            var gameRule = networkManager.gameRule;
+            if (gameRule != null && gameRule is IONetworkGameRule)
+            {
+                var ioGameRule = gameRule as IONetworkGameRule;
+                ioGameRule.NewPlayer(this, selectHead, selectCharacter, selectWeapon, extra);
+                alreadyInit = true;
+            }
+        }
+        if (!alreadyInit)
+        {
+            this.selectHead = selectHead;
+            this.selectCharacter = selectCharacter;
+            this.selectWeapon = selectWeapon;
+            this.extra = extra;
+        }
+        Hp = TotalHp;
     }
     
     public void CmdReady()

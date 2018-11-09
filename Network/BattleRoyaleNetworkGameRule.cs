@@ -7,6 +7,8 @@ public class BattleRoyaleNetworkGameRule : IONetworkGameRule
     [Tooltip("Maximum amount of bots will be filled when start game")]
     public int fillBots = 10;
     public int endMatchCountDown = 10;
+    [Tooltip("Rewards for each ranking, sort from high to low (1 - 10)")]
+    public MatchReward[] rewards;
     public int EndMatchCountingDown { get; protected set; }
     public override bool HasOptionBotCount { get { return false; } }
     public override bool HasOptionMatchTime { get { return false; } }
@@ -41,6 +43,11 @@ public class BattleRoyaleNetworkGameRule : IONetworkGameRule
     {
         base.OnStopConnection(manager);
         isLeavingRoom = false;
+    }
+
+    public void SetRewards(int rank)
+    {
+        MatchRewardHandler.SetRewards(rank, rewards);
     }
 
     IEnumerator EndMatchRoutine()

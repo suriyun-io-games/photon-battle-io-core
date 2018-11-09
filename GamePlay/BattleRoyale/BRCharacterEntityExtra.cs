@@ -230,7 +230,12 @@ public class BRCharacterEntityExtra : PunBehaviour
     protected virtual void RpcRankResult(int rank)
     {
         if (IsMine)
+        {
+            if (GameNetworkManager.Singleton.gameRule != null &&
+                GameNetworkManager.Singleton.gameRule is BattleRoyaleNetworkGameRule)
+                (GameNetworkManager.Singleton.gameRule as BattleRoyaleNetworkGameRule).SetRewards(rank);
             StartCoroutine(ShowRankResultRoutine(rank));
+        }
     }
 
     [PunRPC]

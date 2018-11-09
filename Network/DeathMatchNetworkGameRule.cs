@@ -5,6 +5,8 @@ using UnityEngine;
 public class DeathMatchNetworkGameRule : IONetworkGameRule
 {
     public int endMatchCountDown = 10;
+    [Tooltip("Rewards for each ranking, sort from high to low (1 - 10)")]
+    public MatchReward[] rewards;
     public int EndMatchCountingDown { get; protected set; }
     public override bool HasOptionBotCount { get { return true; } }
     public override bool HasOptionMatchTime { get { return true; } }
@@ -24,6 +26,7 @@ public class DeathMatchNetworkGameRule : IONetworkGameRule
         if (!endMatchCalled)
         {
             isLeavingRoom = true;
+            SetRewards((BaseNetworkGameCharacter.Local as CharacterEntity).rank);
             endMatchCoroutine = networkManager.StartCoroutine(EndMatchRoutine());
             endMatchCalled = true;
         }
@@ -39,6 +42,11 @@ public class DeathMatchNetworkGameRule : IONetworkGameRule
     {
         base.OnStopConnection(manager);
         isLeavingRoom = false;
+    }
+
+    public void SetRewards(int rank)
+    {
+        MatchRewardHandler.SetRewards(rank, rewards);
     }
 
     IEnumerator EndMatchRoutine()

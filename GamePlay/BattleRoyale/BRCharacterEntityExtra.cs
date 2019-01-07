@@ -89,6 +89,7 @@ public class BRCharacterEntityExtra : PunBehaviour
         var brGameManager = GameplayManager.Singleton as BRGameplayManager;
         if (brGameManager == null)
             return;
+
         // Monster entity does not have to move following the air plane
         if (PhotonNetwork.isMasterClient && TempCharacterEntity is MonsterEntity)
         {
@@ -119,25 +120,7 @@ public class BRCharacterEntityExtra : PunBehaviour
             }
         }
 
-        if (brGameManager.currentState != BRState.WaitingForPlayers && !isSpawned)
-        {
-            if (PhotonNetwork.isMasterClient && !botSpawnCalled && TempCharacterEntity is BotEntity && brGameManager.CanSpawnCharacter(TempCharacterEntity))
-            {
-                botSpawnCalled = true;
-                StartCoroutine(BotSpawnRoutine());
-            }
-            if (TempCharacterEntity.TempRigidbody.useGravity)
-                TempCharacterEntity.TempRigidbody.useGravity = false;
-            if (TempCharacterEntity.enabled)
-                TempCharacterEntity.enabled = false;
-            TempCharacterEntity.IsHidding = true;
-            if (PhotonNetwork.isMasterClient || IsMine)
-            {
-                TempTransform.position = brGameManager.GetSpawnerPosition();
-                TempTransform.rotation = brGameManager.GetSpawnerRotation();
-            }
-        }
-        else if (brGameManager.currentState == BRState.WaitingForPlayers || isSpawned)
+        if (brGameManager.currentState == BRState.WaitingForPlayers || isSpawned)
         {
             if (PhotonNetwork.isMasterClient && !botDeadRemoveCalled && TempCharacterEntity is BotEntity && TempCharacterEntity.IsDead)
             {
@@ -149,6 +132,59 @@ public class BRCharacterEntityExtra : PunBehaviour
             if (!TempCharacterEntity.enabled)
                 TempCharacterEntity.enabled = true;
             TempCharacterEntity.IsHidding = false;
+        }
+
+        switch (brGameManager.spawnType)
+        {
+            case BRSpawnType.BattleRoyale:
+                UpdateSpawnBattleRoyale();
+                break;
+            case BRSpawnType.Random:
+                UpdateSpawnRandom();
+                break;
+        }
+    }
+
+    private void UpdateSpawnBattleRoyale()
+    {
+        var brGameManager = GameplayManager.Singleton as BRGameplayManager;
+        if (brGameManager == null)
+            return;
+
+        if (brGameManager.currentState != BRState.WaitingForPlayers && !isSpawned)
+        {
+            if (PhotonNetwork.isMasterClient && !botSpawnCalled && TempCharacterEntity is BotEntity && brGameManager.CanSpawnCharacter(TempCharacterEntity))
+            {
+                botSpawnCalled = true;
+                StartCoroutine(BotSpawnRoutine());
+            }
+            // Hide character and disable physics while in airplane
+            if (TempCharacterEntity.TempRigidbody.useGravity)
+                TempCharacterEntity.TempRigidbody.useGravity = false;
+            if (TempCharacterEntity.enabled)
+                TempCharacterEntity.enabled = false;
+            TempCharacterEntity.IsHidding = true;
+            // Move position / rotation follow the airplane
+            if (PhotonNetwork.isMasterClient || IsMine)
+            {
+                TempTransform.position = brGameManager.GetSpawnerPosition();
+                TempTransform.rotation = brGameManager.GetSpawnerRotation();
+            }
+        }
+    }
+
+    private void UpdateSpawnRandom()
+    {
+        var brGameManager = GameplayManager.Singleton as BRGameplayManager;
+        if (brGameManager == null)
+            return;
+
+        if (brGameManager.currentState != BRState.WaitingForPlayers && !isSpawned && PhotonNetwork.isMasterClient)
+        {
+            var position = TempCharacterEntity.GetSpawnPosition();
+            TempCharacterEntity.TempTransform.position = position;
+            TempCharacterEntity.photonView.RPC("RpcTargetSpawn", TempCharacterEntity.photonView.owner, position.x, position.y, position.z);
+            isSpawned = true;
         }
     }
 

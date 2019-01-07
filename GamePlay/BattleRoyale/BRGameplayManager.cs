@@ -30,6 +30,12 @@ public enum BRState : byte
     LastCircle,
 }
 
+public enum BRSpawnType : byte
+{
+    BattleRoyale,
+    Random,
+}
+
 public class BRGameplayManager : GameplayManager
 {
     public const string CUSTOM_ROOM_CURRENT_PATTERN = "iCP";
@@ -49,6 +55,7 @@ public class BRGameplayManager : GameplayManager
     public const string CUSTOM_ROOM_COUNT_ALL_CHARACTERS = "iALL";
 
     [Header("Battle Royale")]
+    public BRSpawnType spawnType;
     public float waitForPlayersDuration;
     public float waitForFirstCircleDuration;
     public SimpleCubeData spawnableArea;

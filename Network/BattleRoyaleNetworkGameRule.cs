@@ -28,7 +28,8 @@ public class BattleRoyaleNetworkGameRule : IONetworkGameRule
         if (!endMatchCalled)
         {
             isLeavingRoom = true;
-            endMatchCoroutine = networkManager.StartCoroutine(EndMatchRoutine());
+            if (networkManager != null)
+                endMatchCoroutine = networkManager.StartCoroutine(EndMatchRoutine());
             endMatchCalled = true;
         }
     }

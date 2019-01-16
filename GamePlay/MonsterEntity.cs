@@ -18,7 +18,7 @@ public class MonsterEntity : CharacterEntity
             if (PhotonNetwork.isMasterClient)
             {
                 monsterPlayerName = value;
-                photonView.RPC("RpcUpdateMonsterName", PhotonTargets.AllBuffered, value);
+                photonView.RPC("RpcUpdateMonsterName", PhotonTargets.Others, value);
             }
         }
     }
@@ -100,26 +100,37 @@ public class MonsterEntity : CharacterEntity
         get { return monsterKillScore; }
     }
 
-    protected override void Init()
-    {
-        base.Init();
-    }
-
     protected override void Awake()
     {
         base.Awake();
         characterModel = monsterCharacterModel;
         weaponData = monsterWeaponData;
+        spawnPosition = TempTransform.position;
 
         if (PhotonNetwork.isMasterClient)
         {
             playerName = monsterName;
             level = monsterLevel;
-            spawnPosition = TempTransform.position;
             lastUpdateWanderTime = Time.unscaledTime - updateWanderDuration;
             lastAttackTime = Time.unscaledTime - attackDuration;
             ServerSpawn(false);
         }
+    }
+
+    protected override void SyncData()
+    {
+        if (!PhotonNetwork.isMasterClient)
+            return;
+        base.SyncData();
+        photonView.RPC("RpcUpdateMonsterName", PhotonTargets.Others, monsterPlayerName);
+    }
+
+    public override void OnPhotonPlayerConnected(PhotonPlayer newPlayer)
+    {
+        if (!PhotonNetwork.isMasterClient)
+            return;
+        base.OnPhotonPlayerConnected(newPlayer);
+        photonView.RPC("RpcUpdateMonsterName", newPlayer, monsterPlayerName);
     }
 
     protected override void SetLocalPlayer()

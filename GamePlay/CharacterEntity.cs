@@ -470,6 +470,44 @@ public class CharacterEntity : BaseNetworkGameCharacter
         deathTime = Time.unscaledTime;
     }
 
+    protected override void SyncData()
+    {
+        if (!PhotonNetwork.isMasterClient)
+            return;
+        base.SyncData();
+        photonView.RPC("RpcUpdateHp", PhotonTargets.Others, hp);
+        photonView.RPC("RpcUpdateExp", PhotonTargets.Others, exp);
+        photonView.RPC("RpcUpdateLevel", PhotonTargets.Others, level);
+        photonView.RPC("RpcUpdateStatPoint", PhotonTargets.Others, statPoint);
+        photonView.RPC("RpcUpdateWatchAdsCount", PhotonTargets.Others, watchAdsCount);
+        photonView.RPC("RpcUpdateSelectCharacter", PhotonTargets.Others, selectCharacter);
+        photonView.RPC("RpcUpdateSelectHead", PhotonTargets.Others, selectHead);
+        photonView.RPC("RpcUpdateSelectWeapon", PhotonTargets.Others, selectWeapon);
+        photonView.RPC("RpcUpdateIsInvincible", PhotonTargets.Others, isInvincible);
+        photonView.RPC("RpcUpdateAttackingActionId", PhotonTargets.Others, attackingActionId);
+        photonView.RPC("RpcUpdateAddStats", PhotonTargets.Others, JsonUtility.ToJson(addStats));
+        photonView.RPC("RpcUpdateExtra", PhotonTargets.Others, extra);
+    }
+
+    public override void OnPhotonPlayerConnected(PhotonPlayer newPlayer)
+    {
+        if (!PhotonNetwork.isMasterClient)
+            return;
+        base.OnPhotonPlayerConnected(newPlayer);
+        photonView.RPC("RpcUpdateHp", newPlayer, hp);
+        photonView.RPC("RpcUpdateExp", newPlayer, exp);
+        photonView.RPC("RpcUpdateLevel", newPlayer, level);
+        photonView.RPC("RpcUpdateStatPoint", newPlayer, statPoint);
+        photonView.RPC("RpcUpdateWatchAdsCount", newPlayer, watchAdsCount);
+        photonView.RPC("RpcUpdateSelectCharacter", newPlayer, selectCharacter);
+        photonView.RPC("RpcUpdateSelectHead", newPlayer, selectHead);
+        photonView.RPC("RpcUpdateSelectWeapon", newPlayer, selectWeapon);
+        photonView.RPC("RpcUpdateIsInvincible", newPlayer, isInvincible);
+        photonView.RPC("RpcUpdateAttackingActionId", newPlayer, attackingActionId);
+        photonView.RPC("RpcUpdateAddStats", newPlayer, JsonUtility.ToJson(addStats));
+        photonView.RPC("RpcUpdateExtra", newPlayer, extra);
+    }
+
     protected override void OnStartLocalPlayer()
     {
         if (photonView.isMine)
@@ -487,25 +525,6 @@ public class CharacterEntity : BaseNetworkGameCharacter
             }
             CmdReady();
         }
-    }
-
-    public override void OnPhotonPlayerConnected(PhotonPlayer newPlayer)
-    {
-        base.OnPhotonPlayerConnected(newPlayer);
-        if (!PhotonNetwork.isMasterClient)
-            return;
-        photonView.RPC("RpcUpdateHp", newPlayer, hp);
-        photonView.RPC("RpcUpdateExp", newPlayer, exp);
-        photonView.RPC("RpcUpdateLevel", newPlayer, level);
-        photonView.RPC("RpcUpdateStatPoint", newPlayer, statPoint);
-        photonView.RPC("RpcUpdateWatchAdsCount", newPlayer, watchAdsCount);
-        photonView.RPC("RpcUpdateSelectCharacter", newPlayer, selectCharacter);
-        photonView.RPC("RpcUpdateSelectHead", newPlayer, selectHead);
-        photonView.RPC("RpcUpdateSelectWeapon", newPlayer, selectWeapon);
-        photonView.RPC("RpcUpdateIsInvincible", newPlayer, isInvincible);
-        photonView.RPC("RpcUpdateAttackingActionId", newPlayer, attackingActionId);
-        photonView.RPC("RpcUpdateAddStats", newPlayer, JsonUtility.ToJson(addStats));
-        photonView.RPC("RpcUpdateExtra", newPlayer, extra);
     }
 
     protected override void Update()
@@ -814,10 +833,10 @@ public class CharacterEntity : BaseNetworkGameCharacter
         if (Hp <= 0 || isInvincible)
             return;
 
-        photonView.RPC("RpcEffect", PhotonTargets.All, attacker.photonView.viewID, RPC_EFFECT_DAMAGE_HIT);
-        if (!gameplayManager.CanReceiveDamage(this))
+        if (!gameplayManager.CanReceiveDamage(this, attacker))
             return;
 
+        photonView.RPC("RpcEffect", PhotonTargets.All, attacker.photonView.viewID, RPC_EFFECT_DAMAGE_HIT);
         int reduceHp = damage - TotalDefend;
         if (reduceHp < 0)
             reduceHp = 0;

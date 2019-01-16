@@ -18,7 +18,20 @@ public class BotEntity : CharacterEntity
             if (PhotonNetwork.isMasterClient)
             {
                 botPlayerName = value;
-                photonView.RPC("RpcUpdateBotName", PhotonTargets.All, value);
+                photonView.RPC("RpcUpdateBotName", PhotonTargets.Others, value);
+            }
+        }
+    }
+    protected PunTeams.Team botPlayerTeam;
+    public override PunTeams.Team playerTeam
+    {
+        get { return botPlayerTeam; }
+        set
+        {
+            if (PhotonNetwork.isMasterClient)
+            {
+                botPlayerTeam = value;
+                photonView.RPC("RpcUpdateBotTeam", PhotonTargets.Others, value);
             }
         }
     }
@@ -30,15 +43,16 @@ public class BotEntity : CharacterEntity
     public float turnSpeed = 5f;
     public Characteristic characteristic;
     public CharacterStats startAddStats;
+    [HideInInspector, System.NonSerialized]
+    public bool isFixRandomMoveAroundPoint;
+    [HideInInspector, System.NonSerialized]
+    public Vector3 fixRandomMoveAroundPoint;
+    [HideInInspector, System.NonSerialized]
+    public float fixRandomMoveAroundDistance;
     private Vector3 targetPosition;
     private float lastUpdateMovementTime;
     private float lastAttackTime;
     private bool isWallHit;
-
-    protected override void Init()
-    {
-        base.Init();
-    }
 
     protected override void Awake()
     {
@@ -49,6 +63,24 @@ public class BotEntity : CharacterEntity
             lastUpdateMovementTime = Time.unscaledTime - updateMovementDuration;
             lastAttackTime = Time.unscaledTime - attackDuration;
         }
+    }
+
+    protected override void SyncData()
+    {
+        if (!PhotonNetwork.isMasterClient)
+            return;
+        base.SyncData();
+        photonView.RPC("RpcUpdateBotName", PhotonTargets.Others, botPlayerName);
+        photonView.RPC("RpcUpdateBotTeam", PhotonTargets.Others, botPlayerTeam);
+    }
+
+    public override void OnPhotonPlayerConnected(PhotonPlayer newPlayer)
+    {
+        if (!PhotonNetwork.isMasterClient)
+            return;
+        base.OnPhotonPlayerConnected(newPlayer);
+        photonView.RPC("RpcUpdateBotName", newPlayer, botPlayerName);
+        photonView.RPC("RpcUpdateBotTeam", newPlayer, botPlayerTeam);
     }
 
     // Override to do nothing
@@ -81,10 +113,20 @@ public class BotEntity : CharacterEntity
         if (isReachedTarget || isWallHit || Time.unscaledTime - lastUpdateMovementTime >= updateMovementDuration)
         {
             lastUpdateMovementTime = Time.unscaledTime;
-            targetPosition = new Vector3(
-                TempTransform.position.x + Random.Range(-randomMoveDistance, randomMoveDistance),
-                0,
-                TempTransform.position.z + Random.Range(-randomMoveDistance, randomMoveDistance));
+            if (isFixRandomMoveAroundPoint)
+            {
+                targetPosition = new Vector3(
+                    fixRandomMoveAroundPoint.x + Random.Range(-fixRandomMoveAroundDistance, fixRandomMoveAroundDistance),
+                    0,
+                    fixRandomMoveAroundPoint.z + Random.Range(-fixRandomMoveAroundDistance, fixRandomMoveAroundDistance));
+            }
+            else
+            {
+                targetPosition = new Vector3(
+                    TempTransform.position.x + Random.Range(-randomMoveDistance, randomMoveDistance),
+                    0,
+                    TempTransform.position.z + Random.Range(-randomMoveDistance, randomMoveDistance));
+            }
             isWallHit = false;
         }
 
@@ -119,11 +161,12 @@ public class BotEntity : CharacterEntity
     private bool FindEnemy(out CharacterEntity enemy)
     {
         enemy = null;
+        var gameplayManager = GameplayManager.Singleton;
         var colliders = Physics.OverlapSphere(TempTransform.position, detectEnemyDistance);
         foreach (var collider in colliders)
         {
             var character = collider.GetComponent<CharacterEntity>();
-            if (character != null && character != this && character.Hp > 0)
+            if (character != null && character != this && character.Hp > 0 && gameplayManager.CanReceiveDamage(character, this))
             {
                 enemy = character;
                 return true;
@@ -146,15 +189,15 @@ public class BotEntity : CharacterEntity
         Hp = TotalHp;
     }
 
-    public override void OnPhotonPlayerConnected(PhotonPlayer newPlayer)
-    {
-        base.OnPhotonPlayerConnected(newPlayer);
-        photonView.RPC("RpcUpdateBotName", newPlayer, botPlayerName);
-    }
-
     [PunRPC]
     protected void RpcUpdateBotName(string name)
     {
         botPlayerName = name;
+    }
+
+    [PunRPC]
+    protected void RpcUpdateBotTeam(PunTeams.Team team)
+    {
+        botPlayerTeam = team;
     }
 }

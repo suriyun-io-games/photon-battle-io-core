@@ -124,4 +124,9 @@ public class BattleRoyaleNetworkGameRule : IONetworkGameRule
             networkManager.RegisterCharacter(character);
         }
     }
+
+    public override void AdjustBots()
+    {
+        // Battle Royale mode not have to adjust bots
+    }
 }

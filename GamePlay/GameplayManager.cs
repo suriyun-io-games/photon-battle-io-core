@@ -73,7 +73,7 @@ public class GameplayManager : PunBehaviour
         if (PhotonNetwork.isMasterClient)
             OnStartServer();
     }
-    
+
     protected virtual void OnStartServer()
     {
         foreach (var powerUp in powerUps)
@@ -135,11 +135,16 @@ public class GameplayManager : PunBehaviour
         return true;
     }
 
-    public virtual bool CanReceiveDamage(CharacterEntity character)
+    public virtual bool CanReceiveDamage(CharacterEntity damageReceiver, CharacterEntity attacker)
     {
         var networkGameplayManager = BaseNetworkGameManager.Singleton;
-        if (networkGameplayManager != null && networkGameplayManager.IsMatchEnded)
-            return false;
+        if (networkGameplayManager != null)
+        {
+            if (networkGameplayManager.gameRule != null && networkGameplayManager.gameRule.IsTeamGameplay)
+                return damageReceiver.playerTeam != attacker.playerTeam;
+            if (networkGameplayManager.IsMatchEnded)
+                return false;
+        }
         return true;
     }
 

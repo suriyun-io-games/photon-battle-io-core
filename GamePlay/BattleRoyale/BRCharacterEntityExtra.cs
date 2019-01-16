@@ -89,7 +89,7 @@ public class BRCharacterEntityExtra : PunBehaviour
         var brGameManager = GameplayManager.Singleton as BRGameplayManager;
         if (brGameManager == null)
             return;
-
+        var botEntity = TempCharacterEntity as BotEntity;
         // Monster entity does not have to move following the air plane
         if (PhotonNetwork.isMasterClient && TempCharacterEntity is MonsterEntity)
         {
@@ -117,12 +117,18 @@ public class BRCharacterEntityExtra : PunBehaviour
                 if (distance > currentRadius)
                     TempCharacterEntity.Hp -= Mathf.CeilToInt(brGameManager.CurrentCircleHpRateDps * TempCharacterEntity.TotalHp);
                 lastCircleCheckTime = Time.realtimeSinceStartup;
+                if (botEntity != null)
+                {
+                    botEntity.isFixRandomMoveAroundPoint = true;
+                    botEntity.fixRandomMoveAroundPoint = centerPosition;
+                    botEntity.fixRandomMoveAroundDistance = currentRadius;
+                }
             }
         }
 
         if (brGameManager.currentState == BRState.WaitingForPlayers || isSpawned)
         {
-            if (PhotonNetwork.isMasterClient && !botDeadRemoveCalled && TempCharacterEntity is BotEntity && TempCharacterEntity.IsDead)
+            if (PhotonNetwork.isMasterClient && !botDeadRemoveCalled && botEntity != null && TempCharacterEntity.IsDead)
             {
                 botDeadRemoveCalled = true;
                 StartCoroutine(BotDeadRemoveRoutine());
@@ -150,10 +156,10 @@ public class BRCharacterEntityExtra : PunBehaviour
         var brGameManager = GameplayManager.Singleton as BRGameplayManager;
         if (brGameManager == null)
             return;
-
+        var botEntity = TempCharacterEntity as BotEntity;
         if (brGameManager.currentState != BRState.WaitingForPlayers && !isSpawned)
         {
-            if (PhotonNetwork.isMasterClient && !botSpawnCalled && TempCharacterEntity is BotEntity && brGameManager.CanSpawnCharacter(TempCharacterEntity))
+            if (PhotonNetwork.isMasterClient && !botSpawnCalled && botEntity != null && brGameManager.CanSpawnCharacter(TempCharacterEntity))
             {
                 botSpawnCalled = true;
                 StartCoroutine(BotSpawnRoutine());
@@ -240,12 +246,12 @@ public class BRCharacterEntityExtra : PunBehaviour
             photonView.RPC("RpcCharacterSpawned", PhotonTargets.All, brGameplayManager.SpawnCharacter(TempCharacterEntity) + new Vector3(Random.Range(-2.5f, 2.5f), 0, Random.Range(-2.5f, 2.5f)));
         }
     }
-    
+
     public void CmdCharacterSpawn()
     {
         photonView.RPC("RpcServerCharacterSpawn", PhotonTargets.MasterClient);
     }
-    
+
     [PunRPC]
     protected void RpcServerCharacterSpawn()
     {

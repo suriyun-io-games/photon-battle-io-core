@@ -11,12 +11,12 @@ public class GameNetworkManager : BaseNetworkGameManager
 
     [PunRPC]
     protected void RpcCharacterAttack(
-        string weaponId, 
-        bool isLeftHandWeapon, 
-        Vector3 position, 
-        Vector3 direction, 
-        int attackerViewId, 
-        float addRotationX, 
+        string weaponId,
+        bool isLeftHandWeapon,
+        Vector3 position,
+        Vector3 direction,
+        int attackerViewId,
+        float addRotationX,
         float addRotationY)
     {
         // Instantiates damage entities on clients only
@@ -69,5 +69,17 @@ public class GameNetworkManager : BaseNetworkGameManager
         var uiGameplay = FindObjectOfType<UIGameplay>();
         if (uiGameplay != null)
             uiGameplay.KillNotify(killerName, victimName, weaponId);
+    }
+
+    public override void OnMasterClientSwitched(PhotonPlayer newMasterClient)
+    {
+        base.OnMasterClientSwitched(newMasterClient);
+        Characters.Clear();
+        var characters = FindObjectsOfType<BaseNetworkGameCharacter>();
+        foreach (var character in characters)
+        {
+            if (character is MonsterEntity) continue;
+            Characters.Add(character);
+        }
     }
 }

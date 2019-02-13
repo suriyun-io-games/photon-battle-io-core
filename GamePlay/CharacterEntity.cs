@@ -25,6 +25,9 @@ public class CharacterEntity : BaseNetworkGameCharacter
     public Text hpText;
     public Text nameText;
     public Text levelText;
+    public GameObject attackSignalObject;
+    public GameObject attackSignalObjectForTeamA;
+    public GameObject attackSignalObjectForTeamB;
     [Header("Effect")]
     public GameObject invincibleEffect;
 
@@ -561,6 +564,13 @@ public class CharacterEntity : BaseNetworkGameCharacter
         // Update dash state
         if (isDashing && Time.unscaledTime - dashingTime > dashDuration)
             isDashing = false;
+        // Update attack signal
+        if (attackSignalObject != null)
+            attackSignalObject.SetActive(isPlayingAttackAnim);
+        if (attackSignalObjectForTeamA != null)
+            attackSignalObjectForTeamA.SetActive(isPlayingAttackAnim && playerTeam == PunTeams.Team.red);
+        if (attackSignalObjectForTeamB != null)
+            attackSignalObjectForTeamB.SetActive(isPlayingAttackAnim && playerTeam == PunTeams.Team.blue);
     }
 
     private void FixedUpdate()

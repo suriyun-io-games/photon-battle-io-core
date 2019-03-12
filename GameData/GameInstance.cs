@@ -33,6 +33,7 @@ public class GameInstance : BaseNetworkGameInstance
         }
         Singleton = this;
         DontDestroyOnLoad(gameObject);
+        SetupMaps();
         Physics.IgnoreLayerCollision(characterLayer, characterLayer, true);
 
         Heads.Clear();

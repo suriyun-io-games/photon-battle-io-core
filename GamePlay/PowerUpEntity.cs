@@ -61,7 +61,7 @@ public class PowerUpEntity : PunBehaviour
                 if (changingWeapon != null)
                     character.ChangeWeapon(changingWeapon);
             }
-            if (character.photonView.isMine)
+            if (character.photonView.isMine && !(character is BotEntity) && !(character is MonsterEntity))
             {
                 foreach (var currency in currencies)
                 {

@@ -1,11 +1,14 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
 public class UIBase : MonoBehaviour
 {
     public GameObject root;
     public bool hideOnAwake;
+    public UnityEvent onShow;
+    public UnityEvent onHide;
     private bool isAwaken;
 
     protected virtual void Awake()
@@ -28,6 +31,8 @@ public class UIBase : MonoBehaviour
     {
         isAwaken = true;
         ValidateRoot();
+        if (onShow != null)
+            onShow.Invoke();
         root.SetActive(true);
     }
 
@@ -35,6 +40,8 @@ public class UIBase : MonoBehaviour
     {
         isAwaken = true;
         ValidateRoot();
+        if (onHide != null)
+            onHide.Invoke();
         root.SetActive(false);
     }
 

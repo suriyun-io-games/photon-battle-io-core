@@ -643,8 +643,11 @@ public class CharacterEntity : BaseNetworkGameCharacter
                 isDashing = InputManager.GetButtonDown("Dash") && isGround;
                 if (isDashing)
                 {
+                    if (isMobileInput)
+                        dashInputMove = inputMove.normalized;
+                    else
+                        dashInputMove = new Vector2(TempTransform.forward.x, TempTransform.forward.z).normalized;
                     inputAttack = false;
-                    dashInputMove = new Vector2(TempTransform.forward.x, TempTransform.forward.z).normalized;
                     dashingTime = Time.unscaledTime;
                     CmdDash();
                 }

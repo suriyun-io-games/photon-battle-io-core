@@ -119,7 +119,7 @@ public class BRCharacterEntityExtra : PunBehaviour
                 lastCircleCheckTime = Time.realtimeSinceStartup;
                 if (botEntity != null)
                 {
-                    botEntity.isFixRandomMoveAroundPoint = true;
+                    botEntity.isFixRandomMoveAroundPoint = currentRadius > 0 && distance > currentRadius;
                     botEntity.fixRandomMoveAroundPoint = centerPosition;
                     botEntity.fixRandomMoveAroundDistance = currentRadius;
                 }

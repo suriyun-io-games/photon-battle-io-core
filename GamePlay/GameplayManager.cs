@@ -35,28 +35,12 @@ public class GameplayManager : PunBehaviour
     public float respawnDuration = 5f;
     public float invincibleDuration = 1.5f;
     public SpawnArea[] characterSpawnAreas;
+    public SpawnArea[] characterSpawnAreasForTeamA;
+    public SpawnArea[] characterSpawnAreasForTeamB;
     public SpawnArea[] powerUpSpawnAreas;
     public PowerUpSpawnData[] powerUps;
     public readonly Dictionary<string, PowerUpEntity> powerUpEntities = new Dictionary<string, PowerUpEntity>();
     public readonly Dictionary<string, CharacterAttributes> attributes = new Dictionary<string, CharacterAttributes>();
-    private Dictionary<PunTeams.Team, List<SpawnArea>> characterSpawnAreasByTeams;
-    public Dictionary<PunTeams.Team, List<SpawnArea>> CharacterSpawnAreasByTeams
-    {
-        get
-        {
-            if (characterSpawnAreasByTeams == null)
-            {
-                characterSpawnAreasByTeams = new Dictionary<PunTeams.Team, List<SpawnArea>>();
-                foreach (var spawnArea in characterSpawnAreas)
-                {
-                    if (!characterSpawnAreasByTeams.ContainsKey(spawnArea.team))
-                        characterSpawnAreasByTeams.Add(spawnArea.team, new List<SpawnArea>());
-                    characterSpawnAreasByTeams[spawnArea.team].Add(spawnArea);
-                }
-            }
-            return characterSpawnAreasByTeams;
-        }
-    }
 
     protected virtual void Awake()
     {
@@ -118,9 +102,19 @@ public class GameplayManager : PunBehaviour
 
     public Vector3 GetCharacterSpawnPosition(CharacterEntity character)
     {
+        if (character.playerTeam == PunTeams.Team.red && 
+            characterSpawnAreasForTeamA != null &&
+            characterSpawnAreasForTeamA.Length > 0)
+            return characterSpawnAreasForTeamA[Random.Range(0, characterSpawnAreasForTeamA.Length)].GetSpawnPosition();
+
+        if (character.playerTeam == PunTeams.Team.blue &&
+            characterSpawnAreasForTeamB != null &&
+            characterSpawnAreasForTeamB.Length > 0)
+            return characterSpawnAreasForTeamB[Random.Range(0, characterSpawnAreasForTeamB.Length)].GetSpawnPosition();
+
         if (characterSpawnAreas == null || characterSpawnAreas.Length == 0)
             return Vector3.zero;
-        return CharacterSpawnAreasByTeams[character.playerTeam][Random.Range(0, characterSpawnAreas.Length)].GetSpawnPosition();
+        return characterSpawnAreas[Random.Range(0, characterSpawnAreas.Length)].GetSpawnPosition();
     }
 
     public Vector3 GetPowerUpSpawnPosition()

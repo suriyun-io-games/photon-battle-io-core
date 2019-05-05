@@ -1,8 +1,8 @@
 ﻿using UnityEngine;
-using System.Collections.Generic;
 
 public class SpawnArea : MonoBehaviour
 {
+    public PunTeams.Team team;
     public float areaSizeX;
     public float areaSizeZ;
 

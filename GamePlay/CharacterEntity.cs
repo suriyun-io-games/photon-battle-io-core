@@ -928,7 +928,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
 
     public virtual Vector3 GetSpawnPosition()
     {
-        return GameplayManager.Singleton.GetCharacterSpawnPosition();
+        return GameplayManager.Singleton.GetCharacterSpawnPosition(this);
     }
 
     public virtual void OnSpawn() { }

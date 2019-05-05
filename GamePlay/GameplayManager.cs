@@ -39,6 +39,24 @@ public class GameplayManager : PunBehaviour
     public PowerUpSpawnData[] powerUps;
     public readonly Dictionary<string, PowerUpEntity> powerUpEntities = new Dictionary<string, PowerUpEntity>();
     public readonly Dictionary<string, CharacterAttributes> attributes = new Dictionary<string, CharacterAttributes>();
+    private Dictionary<PunTeams.Team, List<SpawnArea>> characterSpawnAreasByTeams;
+    public Dictionary<PunTeams.Team, List<SpawnArea>> CharacterSpawnAreasByTeams
+    {
+        get
+        {
+            if (characterSpawnAreasByTeams == null)
+            {
+                characterSpawnAreasByTeams = new Dictionary<PunTeams.Team, List<SpawnArea>>();
+                foreach (var spawnArea in characterSpawnAreas)
+                {
+                    if (!characterSpawnAreasByTeams.ContainsKey(spawnArea.team))
+                        characterSpawnAreasByTeams.Add(spawnArea.team, new List<SpawnArea>());
+                    characterSpawnAreasByTeams[spawnArea.team].Add(spawnArea);
+                }
+            }
+            return characterSpawnAreasByTeams;
+        }
+    }
 
     protected virtual void Awake()
     {
@@ -98,11 +116,11 @@ public class GameplayManager : PunBehaviour
         }
     }
 
-    public Vector3 GetCharacterSpawnPosition()
+    public Vector3 GetCharacterSpawnPosition(CharacterEntity character)
     {
         if (characterSpawnAreas == null || characterSpawnAreas.Length == 0)
             return Vector3.zero;
-        return characterSpawnAreas[Random.Range(0, characterSpawnAreas.Length)].GetSpawnPosition();
+        return CharacterSpawnAreasByTeams[character.playerTeam][Random.Range(0, characterSpawnAreas.Length)].GetSpawnPosition();
     }
 
     public Vector3 GetPowerUpSpawnPosition()

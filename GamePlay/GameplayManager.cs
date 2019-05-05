@@ -85,6 +85,12 @@ public class GameplayManager : PunBehaviour
             for (var i = 0; i < powerUp.amount; ++i)
                 SpawnPowerUp(powerUp.powerUpPrefab.name);
         }
+        // Spawn monsters
+        MonsterSpawnArea[] monsterSpawnAreas = FindObjectsOfType<MonsterSpawnArea>();
+        foreach (var monsterSpawnArea in monsterSpawnAreas)
+        {
+            monsterSpawnArea.SpawnMonsters();
+        }
     }
 
     public void SpawnPowerUp(string prefabName)

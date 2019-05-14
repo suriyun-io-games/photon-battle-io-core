@@ -5,6 +5,8 @@ using UnityEngine.UI;
 
 public class UIGameplay : MonoBehaviour
 {
+    public string formatLevel = "LV {0}";
+    public string formatExp = "{0}/{1}";
     public Text textLevel;
     public Text textExp;
     public Image fillExp;
@@ -60,10 +62,10 @@ public class UIGameplay : MonoBehaviour
         var exp = localCharacter.Exp;
         var nextExp = GameplayManager.Singleton.GetExp(level);
         if (textLevel != null)
-            textLevel.text = "LV" + level.ToString("N0");
+            textLevel.text = string.Format(formatLevel, level.ToString("N0"));
 
         if (textExp != null)
-            textExp.text = exp.ToString("N0") + "/" + nextExp.ToString("N0");
+            textExp.text = string.Format(formatExp, exp.ToString("N0"), nextExp.ToString("N0"));
 
         if (fillExp != null)
             fillExp.fillAmount = (float)exp / (float)nextExp;

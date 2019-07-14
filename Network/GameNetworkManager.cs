@@ -41,9 +41,9 @@ public class GameNetworkManager : BaseNetworkGameManager
         }
         var characterGo = PhotonNetwork.Instantiate(characterPrefab.name, position, rotation, 0);
         var character = characterGo.GetComponent<CharacterEntity>();
-        character.CmdInit(GameInstance.GetAvailableHead(PlayerSave.GetHead()).GetId(),
-            GameInstance.GetAvailableCharacter(PlayerSave.GetCharacter()).GetId(),
-            GameInstance.GetAvailableWeapon(PlayerSave.GetWeapon()).GetId(),
+        character.CmdInit(GameInstance.GetAvailableHead(PlayerSave.GetHead()).GetHashId(),
+            GameInstance.GetAvailableCharacter(PlayerSave.GetCharacter()).GetHashId(),
+            GameInstance.GetAvailableWeapon(PlayerSave.GetWeapon()).GetHashId(),
             "");
     }
 

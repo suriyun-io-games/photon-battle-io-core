@@ -104,6 +104,13 @@ public class GameInstance : BaseNetworkGameInstance
             if (weapon != null && weapon.IsUnlock())
                 AvailableWeapons.Add(weapon);
         }
+
+        AvailableCustomEquipments.Clear();
+        foreach (var customEquipment in customEquipments)
+        {
+            if (customEquipment != null && customEquipment.IsUnlock())
+                AvailableCustomEquipments.Add(customEquipment);
+        }
     }
 
     public static HeadData GetHead(int key)

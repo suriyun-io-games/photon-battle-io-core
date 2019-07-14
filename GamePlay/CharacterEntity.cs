@@ -976,9 +976,9 @@ public class CharacterEntity : BaseNetworkGameCharacter
         Hp = TotalHp;
     }
 
-    public void CmdInit(string selectHead, string selectCharacter, string selectWeapon, string extra)
+    public void CmdInit(int selectHead, int selectCharacter, int selectWeapon, string extra)
     {
-        photonView.RPC("RpcServerInit", PhotonTargets.MasterClient, selectHead.MakeHashId(), selectCharacter.MakeHashId(), selectWeapon.MakeHashId(), extra);
+        photonView.RPC("RpcServerInit", PhotonTargets.MasterClient, selectHead, selectCharacter, selectWeapon, extra);
     }
 
     [PunRPC]

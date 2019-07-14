@@ -10,6 +10,7 @@ public class GameInstance : BaseNetworkGameInstance
     public CharacterData[] characters;
     public HeadData[] heads;
     public WeaponData[] weapons;
+    public CustomEquipmentData[] customEquipments;
     public BotData[] bots;
     [Tooltip("Physic layer for characters to avoid it collision")]
     public int characterLayer = 8;
@@ -19,10 +20,12 @@ public class GameInstance : BaseNetworkGameInstance
     public static readonly List<HeadData> AvailableHeads = new List<HeadData>();
     public static readonly List<CharacterData> AvailableCharacters = new List<CharacterData>();
     public static readonly List<WeaponData> AvailableWeapons = new List<WeaponData>();
+    public static readonly List<CustomEquipmentData> AvailableCustomEquipments = new List<CustomEquipmentData>();
     // All item list
-    public static readonly Dictionary<string, HeadData> Heads = new Dictionary<string, HeadData>();
-    public static readonly Dictionary<string, CharacterData> Characters = new Dictionary<string, CharacterData>();
-    public static readonly Dictionary<string, WeaponData> Weapons = new Dictionary<string, WeaponData>();
+    public static readonly Dictionary<int, HeadData> Heads = new Dictionary<int, HeadData>();
+    public static readonly Dictionary<int, CharacterData> Characters = new Dictionary<int, CharacterData>();
+    public static readonly Dictionary<int, WeaponData> Weapons = new Dictionary<int, WeaponData>();
+    public static readonly Dictionary<int, CustomEquipmentData> CustomEquipments = new Dictionary<int, CustomEquipmentData>();
     protected override void Awake()
     {
         base.Awake();
@@ -38,20 +41,26 @@ public class GameInstance : BaseNetworkGameInstance
         Heads.Clear();
         foreach (var head in heads)
         {
-            Heads[head.GetId()] = head;
+            Heads[head.GetHashId()] = head;
         }
 
         Characters.Clear();
         foreach (var character in characters)
         {
-            Characters[character.GetId()] = character;
+            Characters[character.GetHashId()] = character;
         }
 
         Weapons.Clear();
         foreach (var weapon in weapons)
         {
             weapon.SetupAnimations();
-            Weapons[weapon.GetId()] = weapon;
+            Weapons[weapon.GetHashId()] = weapon;
+        }
+
+        CustomEquipments.Clear();
+        foreach (var customEquipment in customEquipments)
+        {
+            CustomEquipments[customEquipment.GetHashId()] = customEquipment;
         }
 
         UpdateAvailableItems();
@@ -97,7 +106,7 @@ public class GameInstance : BaseNetworkGameInstance
         }
     }
 
-    public static HeadData GetHead(string key)
+    public static HeadData GetHead(int key)
     {
         if (Heads.Count == 0)
             return null;
@@ -106,7 +115,7 @@ public class GameInstance : BaseNetworkGameInstance
         return result;
     }
 
-    public static CharacterData GetCharacter(string key)
+    public static CharacterData GetCharacter(int key)
     {
         if (Characters.Count == 0)
             return null;
@@ -115,12 +124,21 @@ public class GameInstance : BaseNetworkGameInstance
         return result;
     }
 
-    public static WeaponData GetWeapon(string key)
+    public static WeaponData GetWeapon(int key)
     {
         if (Weapons.Count == 0)
             return null;
         WeaponData result;
         Weapons.TryGetValue(key, out result);
+        return result;
+    }
+
+    public static CustomEquipmentData GetCustomEquipment(int key)
+    {
+        if (CustomEquipments.Count == 0)
+            return null;
+        CustomEquipmentData result;
+        CustomEquipments.TryGetValue(key, out result);
         return result;
     }
 
@@ -149,5 +167,14 @@ public class GameInstance : BaseNetworkGameInstance
         if (index <= 0 || index >= AvailableWeapons.Count)
             index = 0;
         return AvailableWeapons[index];
+    }
+
+    public static CustomEquipmentData GetAvailableCustomEquipment(int index)
+    {
+        if (AvailableCustomEquipments.Count == 0)
+            return null;
+        if (index <= 0 || index >= AvailableCustomEquipments.Count)
+            index = 0;
+        return AvailableCustomEquipments[index];
     }
 }

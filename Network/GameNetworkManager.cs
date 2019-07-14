@@ -11,7 +11,7 @@ public class GameNetworkManager : BaseNetworkGameManager
 
     [PunRPC]
     protected void RpcCharacterAttack(
-        string weaponId,
+        int weaponId,
         bool isLeftHandWeapon,
         Vector3 position,
         Vector3 direction,

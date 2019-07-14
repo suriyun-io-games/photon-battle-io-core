@@ -196,7 +196,7 @@ public class DamageEntity : MonoBehaviour
     }
 
     public static DamageEntity InstantiateNewEntity(
-        string weaponId,
+        int weaponId,
         bool isLeftHandWeapon,
         Vector3 position,
         Vector3 direction,

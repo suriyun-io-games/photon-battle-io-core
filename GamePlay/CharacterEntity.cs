@@ -37,14 +37,14 @@ public class CharacterEntity : BaseNetworkGameCharacter
     protected int _level;
     protected int _statPoint;
     protected int _watchAdsCount;
-    protected string _selectCharacter;
-    protected string _selectHead;
-    protected string _selectWeapon;
+    protected int _selectCharacter;
+    protected int _selectHead;
+    protected int _selectWeapon;
     protected bool _isInvincible;
     protected int _attackingActionId;
     protected CharacterStats _addStats;
     protected string _extra;
-    protected string _defaultSelectWeapon;
+    protected int _defaultSelectWeapon;
 
     public virtual int hp
     {
@@ -155,7 +155,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
             }
         }
     }
-    public virtual string selectCharacter
+    public virtual int selectCharacter
     {
         get { return _selectCharacter; }
         set
@@ -167,7 +167,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
             }
         }
     }
-    public virtual string selectHead
+    public virtual int selectHead
     {
         get { return _selectHead; }
         set
@@ -179,7 +179,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
             }
         }
     }
-    public virtual string selectWeapon
+    public virtual int selectWeapon
     {
         get { return _selectWeapon; }
         set
@@ -239,7 +239,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
             }
         }
     }
-    public virtual string defaultSelectWeapon
+    public virtual int defaultSelectWeapon
     {
         get { return _defaultSelectWeapon; }
         set
@@ -447,9 +447,9 @@ public class CharacterEntity : BaseNetworkGameCharacter
         level = 1;
         statPoint = 0;
         watchAdsCount = 0;
-        selectCharacter = "";
-        selectHead = "";
-        selectWeapon = "";
+        selectCharacter = 0;
+        selectHead = 0;
+        selectWeapon = 0;
         isInvincible = false;
         attackingActionId = -1;
         addStats = new CharacterStats();
@@ -914,7 +914,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
     {
         if (weaponData == null)
             return;
-        selectWeapon = weaponData.GetId();
+        selectWeapon = weaponData.GetHashId();
     }
     
     public void UpdateCharacterModelHiddingState()
@@ -969,7 +969,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
     {
         if (!PhotonNetwork.isMasterClient)
             return;
-        if (!string.IsNullOrEmpty(defaultSelectWeapon))
+        if (defaultSelectWeapon == 0)
             selectWeapon = defaultSelectWeapon;
         isPlayingAttackAnim = false;
         isDead = false;
@@ -978,11 +978,11 @@ public class CharacterEntity : BaseNetworkGameCharacter
 
     public void CmdInit(string selectHead, string selectCharacter, string selectWeapon, string extra)
     {
-        photonView.RPC("RpcServerInit", PhotonTargets.MasterClient, selectHead, selectCharacter, selectWeapon, extra);
+        photonView.RPC("RpcServerInit", PhotonTargets.MasterClient, selectHead.MakeHashId(), selectCharacter.MakeHashId(), selectWeapon.MakeHashId(), extra);
     }
 
     [PunRPC]
-    protected void RpcServerInit(string selectHead, string selectCharacter, string selectWeapon, string extra)
+    protected void RpcServerInit(int selectHead, int selectCharacter, int selectWeapon, string extra)
     {
         var alreadyInit = false;
         var networkManager = BaseNetworkGameManager.Singleton;
@@ -1175,7 +1175,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
         _watchAdsCount = watchAdsCount;
     }
     [PunRPC]
-    protected virtual void RpcUpdateSelectCharacter(string selectCharacter)
+    protected virtual void RpcUpdateSelectCharacter(int selectCharacter)
     {
         _selectCharacter = selectCharacter;
 
@@ -1196,7 +1196,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
         UpdateCharacterModelHiddingState();
     }
     [PunRPC]
-    protected virtual void RpcUpdateSelectHead(string selectHead)
+    protected virtual void RpcUpdateSelectHead(int selectHead)
     {
         _selectHead = selectHead;
         headData = GameInstance.GetHead(selectHead);
@@ -1205,12 +1205,12 @@ public class CharacterEntity : BaseNetworkGameCharacter
         UpdateCharacterModelHiddingState();
     }
     [PunRPC]
-    protected virtual void RpcUpdateSelectWeapon(string selectWeapon)
+    protected virtual void RpcUpdateSelectWeapon(int selectWeapon)
     {
         _selectWeapon = selectWeapon;
         if (PhotonNetwork.isMasterClient)
         {
-            if (string.IsNullOrEmpty(defaultSelectWeapon))
+            if (defaultSelectWeapon == 0)
                 defaultSelectWeapon = selectWeapon;
         }
         weaponData = GameInstance.GetWeapon(selectWeapon);
@@ -1239,7 +1239,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
         _extra = extra;
     }
     [PunRPC]
-    protected virtual void RpcUpdateDefaultSelectWeapon(string defaultSelectWeapon)
+    protected virtual void RpcUpdateDefaultSelectWeapon(int defaultSelectWeapon)
     {
         _defaultSelectWeapon = defaultSelectWeapon;
     }

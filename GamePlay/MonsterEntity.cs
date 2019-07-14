@@ -149,19 +149,19 @@ public class MonsterEntity : CharacterEntity
     }
 
     [PunRPC]
-    protected override void RpcUpdateSelectCharacter(string value)
+    protected override void RpcUpdateSelectCharacter(int value)
     {
         // Override base function to changes functionality, to do nothing
     }
 
     [PunRPC]
-    protected override void RpcUpdateSelectHead(string value)
+    protected override void RpcUpdateSelectHead(int value)
     {
         // Override base function to changes functionality, to do nothing
     }
 
     [PunRPC]
-    protected override void RpcUpdateSelectWeapon(string value)
+    protected override void RpcUpdateSelectWeapon(int value)
     {
         // Override base function to changes functionality, to do nothing
     }

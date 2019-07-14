@@ -32,18 +32,18 @@ public class IONetworkGameRule : BaseNetworkGameRule
         botEntity.selectHead = bot.GetSelectHead();
         botEntity.selectCharacter = bot.GetSelectCharacter();
         if (startWeapon != null)
-            botEntity.selectWeapon = startWeapon.GetId();
+            botEntity.selectWeapon = startWeapon.GetHashId();
         else
             botEntity.selectWeapon = bot.GetSelectWeapon();
         return botEntity;
     }
 
-    public virtual void NewPlayer(CharacterEntity character, string selectHead, string selectCharacter, string selectWeapon, string extra)
+    public virtual void NewPlayer(CharacterEntity character, int selectHead, int selectCharacter, int selectWeapon, string extra)
     {
         character.selectHead = selectHead;
         character.selectCharacter = selectCharacter;
         if (startWeapon != null)
-            character.selectWeapon = startWeapon.GetId();
+            character.selectWeapon = startWeapon.GetHashId();
         else
             character.selectWeapon = selectWeapon;
         character.extra = extra;

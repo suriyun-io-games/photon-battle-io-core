@@ -21,7 +21,21 @@ public class GameNetworkManager : BaseNetworkGameManager
     {
         // Instantiates damage entities on clients only
         if (!PhotonNetwork.isMasterClient)
-            DamageEntity.InstantiateNewEntity(weaponId, isLeftHandWeapon, position, direction, attackerViewId, addRotationX, addRotationY);
+            DamageEntity.InstantiateNewEntityByWeapon(weaponId, isLeftHandWeapon, position, direction, attackerViewId, addRotationX, addRotationY);
+    }
+
+    [PunRPC]
+    protected void RpcCharacterUseSkill(
+        int weaponId,
+        Vector3 position,
+        Vector3 direction,
+        int attackerViewId,
+        float addRotationX,
+        float addRotationY)
+    {
+        // Instantiates damage entities on clients only
+        if (!PhotonNetwork.isMasterClient)
+            DamageEntity.InstantiateNewEntityBySkill(weaponId, position, direction, attackerViewId, addRotationX, addRotationY);
     }
 
     [PunRPC]

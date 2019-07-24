@@ -21,6 +21,10 @@ public class DamageEntity : MonoBehaviour
     private float addRotationY;
     [HideInInspector]
     public int weaponDamage;
+    [HideInInspector]
+    public byte hitEffectType;
+    [HideInInspector]
+    public int relateDataId;
 
     private CharacterEntity attacker;
     public CharacterEntity Attacker
@@ -180,7 +184,7 @@ public class DamageEntity : MonoBehaviour
             var gameplayManager = GameplayManager.Singleton;
             float damage = Attacker.TotalAttack;
             damage += (Random.Range(gameplayManager.minAttackVaryRate, gameplayManager.maxAttackVaryRate) * damage);
-            target.ReceiveDamage(Attacker, Mathf.CeilToInt(damage));
+            target.ReceiveDamage(Attacker, Mathf.CeilToInt(damage), hitEffectType, relateDataId);
         }
     }
 
@@ -195,7 +199,7 @@ public class DamageEntity : MonoBehaviour
         return TempTransform.forward * speed * GameplayManager.REAL_MOVE_SPEED_RATE;
     }
 
-    public static DamageEntity InstantiateNewEntity(
+    public static DamageEntity InstantiateNewEntityByWeapon(
         int weaponId,
         bool isLeftHandWeapon,
         Vector3 position,
@@ -207,6 +211,20 @@ public class DamageEntity : MonoBehaviour
         WeaponData weaponData = null;
         if (GameInstance.Weapons.TryGetValue(weaponId, out weaponData))
             return InstantiateNewEntity(weaponData.damagePrefab, isLeftHandWeapon, position, direction, attackerViewId, addRotationX, addRotationY);
+        return null;
+    }
+
+    public static DamageEntity InstantiateNewEntityBySkill(
+        int skillId,
+        Vector3 position,
+        Vector3 direction,
+        int attackerViewId,
+        float addRotationX,
+        float addRotationY)
+    {
+        SkillData skillData = null;
+        if (GameInstance.Skills.TryGetValue(skillId, out skillData))
+            return InstantiateNewEntity(skillData.damagePrefab, false, position, direction, attackerViewId, addRotationX, addRotationY);
         return null;
     }
 

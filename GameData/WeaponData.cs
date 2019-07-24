@@ -45,13 +45,17 @@ public class WeaponData : ItemData
             // Velocity also being set when set `Attacker` too.
             var position = launchTransform.position;
             var direction = attacker.TempTransform.forward;
+
             var damageEntity = DamageEntity.InstantiateNewEntity(damagePrefab, isLeftHandWeapon, position, direction, attacker.photonView.viewID, addRotationX, addRotationY);
             damageEntity.weaponDamage = Mathf.CeilToInt(damage);
+            damageEntity.hitEffectType = CharacterEntity.RPC_EFFECT_DAMAGE_HIT;
+            damageEntity.relateDataId = GetHashId();
+
             gameNetworkManager.photonView.RPC("RpcCharacterAttack", PhotonTargets.Others, GetHashId(), isLeftHandWeapon, position, direction, attacker.photonView.viewID, addRotationX, addRotationY);
             addRotationY += addingRotationY;
         }
 
-        attacker.photonView.RPC("RpcEffect", PhotonTargets.All, attacker.photonView.viewID, CharacterEntity.RPC_EFFECT_DAMAGE_SPAWN);
+        attacker.photonView.RPC("RpcEffect", PhotonTargets.All, attacker.photonView.viewID, CharacterEntity.RPC_EFFECT_DAMAGE_SPAWN, GetHashId());
     }
 
     public void SetupAnimations()

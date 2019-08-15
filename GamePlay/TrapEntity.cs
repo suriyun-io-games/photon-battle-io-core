@@ -1,10 +1,10 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Photon;
+using Photon.Pun;
 
 [RequireComponent(typeof(Rigidbody))]
-public class TrapEntity : PunBehaviour
+public class TrapEntity : MonoBehaviourPunCallbacks
 {
     public const float ReachedTargetDistance = 0.1f;
     public float triggerableDuration = 2;
@@ -57,7 +57,7 @@ public class TrapEntity : PunBehaviour
 
     private void Update()
     {
-        if (!PhotonNetwork.isMasterClient)
+        if (!PhotonNetwork.IsMasterClient)
             return;
 
         if (MoveWaypoints.Count <= 1)
@@ -102,20 +102,20 @@ public class TrapEntity : PunBehaviour
 
     private void OnTriggerStay(Collider other)
     {
-        if (!PhotonNetwork.isMasterClient)
+        if (!PhotonNetwork.IsMasterClient)
             return;
 
         var character = other.GetComponent<CharacterEntity>();
         if (character == null)
             return;
 
-        var characterViewId = character.photonView.viewID;
+        var characterViewId = character.photonView.ViewID;
         var time = Time.unscaledTime;
         if (TriggerredTime.ContainsKey(characterViewId) && time - TriggerredTime[characterViewId] < triggerableDuration)
             return;
 
         TriggerredTime[characterViewId] = time;
         character.Hp -= triggeredDamage;
-        character.photonView.RPC("RpcEffect", PhotonTargets.All, photonView.viewID, CharacterEntity.RPC_EFFECT_TRAP_HIT, 0);
+        character.photonView.RPC("RpcEffect", RpcTarget.All, photonView.ViewID, CharacterEntity.RPC_EFFECT_TRAP_HIT, 0);
     }
 }

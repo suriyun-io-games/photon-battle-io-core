@@ -1,6 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Photon.Pun;
+using Photon.Realtime;
 
 public class MonsterEntity : CharacterEntity
 {
@@ -15,10 +17,10 @@ public class MonsterEntity : CharacterEntity
         get { return monsterPlayerName; }
         set
         {
-            if (PhotonNetwork.isMasterClient)
+            if (PhotonNetwork.IsMasterClient)
             {
                 monsterPlayerName = value;
-                photonView.RPC("RpcUpdateMonsterName", PhotonTargets.Others, value);
+                photonView.RPC("RpcUpdateMonsterName", RpcTarget.Others, value);
             }
         }
     }
@@ -107,7 +109,7 @@ public class MonsterEntity : CharacterEntity
         weaponData = monsterWeaponData;
         spawnPosition = TempTransform.position;
 
-        if (PhotonNetwork.isMasterClient)
+        if (PhotonNetwork.IsMasterClient)
         {
             playerName = monsterName;
             level = monsterLevel;
@@ -119,17 +121,18 @@ public class MonsterEntity : CharacterEntity
 
     protected override void SyncData()
     {
-        if (!PhotonNetwork.isMasterClient)
+        if (!PhotonNetwork.IsMasterClient)
             return;
         base.SyncData();
-        photonView.RPC("RpcUpdateMonsterName", PhotonTargets.Others, monsterPlayerName);
+        photonView.RPC("RpcUpdateMonsterName", RpcTarget.Others, monsterPlayerName);
     }
 
-    public override void OnPhotonPlayerConnected(PhotonPlayer newPlayer)
+
+    public override void OnPlayerEnteredRoom(Player newPlayer)
     {
-        if (!PhotonNetwork.isMasterClient)
+        if (!PhotonNetwork.IsMasterClient)
             return;
-        base.OnPhotonPlayerConnected(newPlayer);
+        base.OnPlayerEnteredRoom(newPlayer);
         photonView.RPC("RpcUpdateMonsterName", newPlayer, monsterPlayerName);
     }
 
@@ -168,7 +171,7 @@ public class MonsterEntity : CharacterEntity
 
     protected override void UpdateMovements()
     {
-        if (!PhotonNetwork.isMasterClient)
+        if (!PhotonNetwork.IsMasterClient)
             return;
 
         if (Hp <= 0)

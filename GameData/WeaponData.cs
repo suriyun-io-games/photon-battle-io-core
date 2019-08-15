@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Photon.Pun;
 
 public class WeaponData : ItemData
 {
@@ -17,7 +18,7 @@ public class WeaponData : ItemData
 
     public void Launch(CharacterEntity attacker, bool isLeftHandWeapon)
     {
-        if (attacker == null || !PhotonNetwork.isMasterClient)
+        if (attacker == null || !PhotonNetwork.IsMasterClient)
             return;
 
         var gameNetworkManager = GameNetworkManager.Singleton;
@@ -46,16 +47,16 @@ public class WeaponData : ItemData
             var position = launchTransform.position;
             var direction = attacker.TempTransform.forward;
 
-            var damageEntity = DamageEntity.InstantiateNewEntity(damagePrefab, isLeftHandWeapon, position, direction, attacker.photonView.viewID, addRotationX, addRotationY);
+            var damageEntity = DamageEntity.InstantiateNewEntity(damagePrefab, isLeftHandWeapon, position, direction, attacker.photonView.ViewID, addRotationX, addRotationY);
             damageEntity.weaponDamage = Mathf.CeilToInt(damage);
             damageEntity.hitEffectType = CharacterEntity.RPC_EFFECT_DAMAGE_HIT;
             damageEntity.relateDataId = GetHashId();
 
-            gameNetworkManager.photonView.RPC("RpcCharacterAttack", PhotonTargets.Others, GetHashId(), isLeftHandWeapon, position, direction, attacker.photonView.viewID, addRotationX, addRotationY);
+            gameNetworkManager.photonView.RPC("RpcCharacterAttack", RpcTarget.Others, GetHashId(), isLeftHandWeapon, position, direction, attacker.photonView.ViewID, addRotationX, addRotationY);
             addRotationY += addingRotationY;
         }
 
-        attacker.photonView.RPC("RpcEffect", PhotonTargets.All, attacker.photonView.viewID, CharacterEntity.RPC_EFFECT_DAMAGE_SPAWN, GetHashId());
+        attacker.photonView.RPC("RpcEffect", RpcTarget.All, attacker.photonView.ViewID, CharacterEntity.RPC_EFFECT_DAMAGE_SPAWN, GetHashId());
     }
 
     public void SetupAnimations()

@@ -1,6 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using Photon.Realtime;
 using UnityEngine;
+using Photon.Pun;
 
 public class GameNetworkManager : BaseNetworkGameManager
 {
@@ -20,7 +22,7 @@ public class GameNetworkManager : BaseNetworkGameManager
         float addRotationY)
     {
         // Instantiates damage entities on clients only
-        if (!PhotonNetwork.isMasterClient)
+        if (!PhotonNetwork.IsMasterClient)
             DamageEntity.InstantiateNewEntityByWeapon(weaponId, isLeftHandWeapon, position, direction, attackerViewId, addRotationX, addRotationY);
     }
 
@@ -34,7 +36,7 @@ public class GameNetworkManager : BaseNetworkGameManager
         float addRotationY)
     {
         // Instantiates damage entities on clients only
-        if (!PhotonNetwork.isMasterClient)
+        if (!PhotonNetwork.IsMasterClient)
             DamageEntity.InstantiateNewEntityBySkill(weaponId, position, direction, attackerViewId, addRotationX, addRotationY);
     }
 
@@ -77,7 +79,7 @@ public class GameNetworkManager : BaseNetworkGameManager
         foreach (var score in scores)
         {
             ++rank;
-            if (BaseNetworkGameCharacter.Local != null && score.viewId == BaseNetworkGameCharacter.Local.photonView.viewID)
+            if (BaseNetworkGameCharacter.Local != null && score.viewId == BaseNetworkGameCharacter.Local.photonView.ViewID)
             {
                 (BaseNetworkGameCharacter.Local as CharacterEntity).rank = rank;
                 break;
@@ -95,7 +97,7 @@ public class GameNetworkManager : BaseNetworkGameManager
             uiGameplay.KillNotify(killerName, victimName, weaponId);
     }
 
-    public override void OnMasterClientSwitched(PhotonPlayer newMasterClient)
+    public override void OnMasterClientSwitched(Player newMasterClient)
     {
         base.OnMasterClientSwitched(newMasterClient);
         Characters.Clear();

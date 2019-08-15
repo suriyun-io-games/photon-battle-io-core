@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Networking;
+using Photon.Pun;
 
 public class SkillData : ScriptableObject
 {
@@ -33,7 +33,7 @@ public class SkillData : ScriptableObject
 
     public void Launch(CharacterEntity attacker)
     {
-        if (attacker == null || !PhotonNetwork.isMasterClient)
+        if (attacker == null || !PhotonNetwork.IsMasterClient)
             return;
 
         var gameNetworkManager = GameNetworkManager.Singleton;
@@ -62,15 +62,15 @@ public class SkillData : ScriptableObject
             var position = launchTransform.position;
             var direction = attacker.TempTransform.forward;
 
-            var damageEntity = DamageEntity.InstantiateNewEntity(damagePrefab, false, position, direction, attacker.photonView.viewID, addRotationX, addRotationY);
+            var damageEntity = DamageEntity.InstantiateNewEntity(damagePrefab, false, position, direction, attacker.photonView.ViewID, addRotationX, addRotationY);
             damageEntity.weaponDamage = Mathf.CeilToInt(damage);
             damageEntity.hitEffectType = CharacterEntity.RPC_EFFECT_SKILL_HIT;
             damageEntity.relateDataId = GetHashId();
 
-            gameNetworkManager.photonView.RPC("RpcCharacterUseSkill", PhotonTargets.Others, GetHashId(), position, direction, attacker.photonView.viewID, addRotationX, addRotationY);
+            gameNetworkManager.photonView.RPC("RpcCharacterUseSkill", RpcTarget.Others, GetHashId(), position, direction, attacker.photonView.ViewID, addRotationX, addRotationY);
             addRotationY += addingRotationY;
         }
 
-        attacker.photonView.RPC("RpcEffect", PhotonTargets.All, attacker.photonView.viewID, CharacterEntity.RPC_EFFECT_SKILL_SPAWN, GetHashId());
+        attacker.photonView.RPC("RpcEffect", RpcTarget.All, attacker.photonView.ViewID, CharacterEntity.RPC_EFFECT_SKILL_SPAWN, GetHashId());
     }
 }

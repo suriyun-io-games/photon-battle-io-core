@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Photon.Pun;
 
 [RequireComponent(typeof(Rigidbody))]
 public class DamageEntity : MonoBehaviour
@@ -140,7 +141,7 @@ public class DamageEntity : MonoBehaviour
 
         var otherCharacter = other.GetComponent<CharacterEntity>();
         // Damage will not hit attacker, so avoid it
-        if (otherCharacter != null && otherCharacter.photonView.viewID == attackerViewId)
+        if (otherCharacter != null && otherCharacter.photonView.ViewID == attackerViewId)
             return;
 
         var hitSomeAliveCharacter = false;
@@ -155,7 +156,7 @@ public class DamageEntity : MonoBehaviour
         {
             var target = colliders[i].GetComponent<CharacterEntity>();
             // If not character or character is attacker, skip it.
-            if (target == null || target == otherCharacter || target.photonView.viewID == attackerViewId || target.Hp <= 0)
+            if (target == null || target == otherCharacter || target.photonView.ViewID == attackerViewId || target.Hp <= 0)
                 continue;
 
             hitSomeAliveCharacter = true;
@@ -179,7 +180,7 @@ public class DamageEntity : MonoBehaviour
     private void ApplyDamage(CharacterEntity target)
     {
         // Damage receiving calculation on server only
-        if (PhotonNetwork.isMasterClient)
+        if (PhotonNetwork.IsMasterClient)
         {
             var gameplayManager = GameplayManager.Singleton;
             float damage = Attacker.TotalAttack;

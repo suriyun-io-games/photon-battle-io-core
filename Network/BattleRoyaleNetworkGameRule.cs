@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Photon.Pun;
 
 public class BattleRoyaleNetworkGameRule : IONetworkGameRule
 {
@@ -95,7 +96,7 @@ public class BattleRoyaleNetworkGameRule : IONetworkGameRule
                         continue;
                     }
                     if (!character.IsDead)
-                        extra.photonView.RPC("RpcRankResult", extra.photonView.owner, 1);
+                        extra.photonView.RPC("RpcRankResult", extra.photonView.Owner, 1);
                 }
             }
             // If some characters are not spawned, won't end match

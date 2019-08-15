@@ -1,10 +1,11 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Photon;
+using Photon.Pun;
+using Photon.Realtime;
 
 [RequireComponent(typeof(CharacterEntity))]
-public class BRCharacterEntityExtra : PunBehaviour
+public class BRCharacterEntityExtra : MonoBehaviourPunCallbacks
 {
     protected bool _isSpawned;
     public bool isSpawned
@@ -12,10 +13,10 @@ public class BRCharacterEntityExtra : PunBehaviour
         get { return _isSpawned; }
         set
         {
-            if (PhotonNetwork.isMasterClient && value != _isSpawned)
+            if (PhotonNetwork.IsMasterClient && value != _isSpawned)
             {
                 _isSpawned = value;
-                photonView.RPC("RpcUpdateIsSpawned", PhotonTargets.Others, value);
+                photonView.RPC("RpcUpdateIsSpawned", RpcTarget.Others, value);
             }
         }
     }
@@ -47,7 +48,7 @@ public class BRCharacterEntityExtra : PunBehaviour
     private bool botDeadRemoveCalled;
     private float lastCircleCheckTime;
 
-    public bool IsMine { get { return photonView.isMine && !(TempCharacterEntity is BotEntity); } }
+    public bool IsMine { get { return photonView.IsMine && !(TempCharacterEntity is BotEntity); } }
 
     private void Awake()
     {
@@ -76,10 +77,10 @@ public class BRCharacterEntityExtra : PunBehaviour
         TempCharacterEntity.onDead -= OnDead;
     }
 
-    public override void OnPhotonPlayerConnected(PhotonPlayer newPlayer)
+    public override void OnPlayerEnteredRoom(Player newPlayer)
     {
-        base.OnPhotonPlayerConnected(newPlayer);
-        if (!PhotonNetwork.isMasterClient)
+        base.OnPlayerEnteredRoom(newPlayer);
+        if (!PhotonNetwork.IsMasterClient)
             return;
         photonView.RPC("RpcUpdateIsSpawned", newPlayer, isSpawned);
     }
@@ -91,7 +92,7 @@ public class BRCharacterEntityExtra : PunBehaviour
             return;
         var botEntity = TempCharacterEntity as BotEntity;
         // Monster entity does not have to move following the air plane
-        if (PhotonNetwork.isMasterClient && TempCharacterEntity is MonsterEntity)
+        if (PhotonNetwork.IsMasterClient && TempCharacterEntity is MonsterEntity)
         {
             if (!TempCharacterEntity.TempRigidbody.useGravity)
                 TempCharacterEntity.TempRigidbody.useGravity = true;
@@ -103,7 +104,7 @@ public class BRCharacterEntityExtra : PunBehaviour
             return;
         }
 
-        if (PhotonNetwork.isMasterClient)
+        if (PhotonNetwork.IsMasterClient)
         {
             if (brGameManager.currentState != BRState.WaitingForPlayers && Time.realtimeSinceStartup - lastCircleCheckTime >= 1f)
             {
@@ -128,7 +129,7 @@ public class BRCharacterEntityExtra : PunBehaviour
 
         if (brGameManager.currentState == BRState.WaitingForPlayers || isSpawned)
         {
-            if (PhotonNetwork.isMasterClient && !botDeadRemoveCalled && botEntity != null && TempCharacterEntity.IsDead)
+            if (PhotonNetwork.IsMasterClient && !botDeadRemoveCalled && botEntity != null && TempCharacterEntity.IsDead)
             {
                 botDeadRemoveCalled = true;
                 StartCoroutine(BotDeadRemoveRoutine());
@@ -159,7 +160,7 @@ public class BRCharacterEntityExtra : PunBehaviour
         var botEntity = TempCharacterEntity as BotEntity;
         if (brGameManager.currentState != BRState.WaitingForPlayers && !isSpawned)
         {
-            if (PhotonNetwork.isMasterClient && !botSpawnCalled && botEntity != null && brGameManager.CanSpawnCharacter(TempCharacterEntity))
+            if (PhotonNetwork.IsMasterClient && !botSpawnCalled && botEntity != null && brGameManager.CanSpawnCharacter(TempCharacterEntity))
             {
                 botSpawnCalled = true;
                 StartCoroutine(BotSpawnRoutine());
@@ -171,7 +172,7 @@ public class BRCharacterEntityExtra : PunBehaviour
                 TempCharacterEntity.enabled = false;
             TempCharacterEntity.IsHidding = true;
             // Move position / rotation follow the airplane
-            if (PhotonNetwork.isMasterClient || IsMine)
+            if (PhotonNetwork.IsMasterClient || IsMine)
             {
                 TempTransform.position = brGameManager.GetSpawnerPosition();
                 TempTransform.rotation = brGameManager.GetSpawnerRotation();
@@ -185,11 +186,11 @@ public class BRCharacterEntityExtra : PunBehaviour
         if (brGameManager == null)
             return;
 
-        if (brGameManager.currentState != BRState.WaitingForPlayers && !isSpawned && PhotonNetwork.isMasterClient)
+        if (brGameManager.currentState != BRState.WaitingForPlayers && !isSpawned && PhotonNetwork.IsMasterClient)
         {
             var position = TempCharacterEntity.GetSpawnPosition();
             TempCharacterEntity.TempTransform.position = position;
-            TempCharacterEntity.photonView.RPC("RpcTargetSpawn", TempCharacterEntity.photonView.owner, position.x, position.y, position.z);
+            TempCharacterEntity.photonView.RPC("RpcTargetSpawn", TempCharacterEntity.photonView.Owner, position.x, position.y, position.z);
             isSpawned = true;
         }
     }
@@ -208,11 +209,11 @@ public class BRCharacterEntityExtra : PunBehaviour
 
     private void OnDead()
     {
-        if (!PhotonNetwork.isMasterClient)
+        if (!PhotonNetwork.IsMasterClient)
             return;
         var brGameplayManager = GameplayManager.Singleton as BRGameplayManager;
         if (brGameplayManager != null)
-            photonView.RPC("RpcRankResult", photonView.owner, BaseNetworkGameManager.Singleton.CountAliveCharacters() + 1);
+            photonView.RPC("RpcRankResult", photonView.Owner, BaseNetworkGameManager.Singleton.CountAliveCharacters() + 1);
     }
 
     IEnumerator ShowRankResultRoutine(int rank)
@@ -237,19 +238,19 @@ public class BRCharacterEntityExtra : PunBehaviour
 
     public void ServerCharacterSpawn()
     {
-        if (!PhotonNetwork.isMasterClient)
+        if (!PhotonNetwork.IsMasterClient)
             return;
         var brGameplayManager = GameplayManager.Singleton as BRGameplayManager;
         if (!isSpawned && brGameplayManager != null)
         {
             isSpawned = true;
-            photonView.RPC("RpcCharacterSpawned", PhotonTargets.All, brGameplayManager.SpawnCharacter(TempCharacterEntity) + new Vector3(Random.Range(-2.5f, 2.5f), 0, Random.Range(-2.5f, 2.5f)));
+            photonView.RPC("RpcCharacterSpawned", RpcTarget.All, brGameplayManager.SpawnCharacter(TempCharacterEntity) + new Vector3(Random.Range(-2.5f, 2.5f), 0, Random.Range(-2.5f, 2.5f)));
         }
     }
 
     public void CmdCharacterSpawn()
     {
-        photonView.RPC("RpcServerCharacterSpawn", PhotonTargets.MasterClient);
+        photonView.RPC("RpcServerCharacterSpawn", RpcTarget.MasterClient);
     }
 
     [PunRPC]

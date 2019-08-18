@@ -7,9 +7,25 @@ public class UIBase : MonoBehaviour
 {
     public GameObject root;
     public bool hideOnAwake;
+    public bool moveToLastSiblingOnShow;
     public UnityEvent onShow;
     public UnityEvent onHide;
     private bool isAwaken;
+
+    private bool findUIExtension;
+    private IUIExtension uiExtension;
+    public IUIExtension UIExtension
+    {
+        get
+        {
+            if (!findUIExtension)
+            {
+                findUIExtension = true;
+                uiExtension = GetComponent<IUIExtension>();
+            }
+            return uiExtension;
+        }
+    }
 
     protected virtual void Awake()
     {
@@ -18,7 +34,11 @@ public class UIBase : MonoBehaviour
         isAwaken = true;
         ValidateRoot();
         if (hideOnAwake)
-            Hide();
+        {
+            if (onHide != null)
+                onHide.Invoke();
+            root.SetActive(false);
+        }
     }
 
     public void ValidateRoot()
@@ -33,7 +53,12 @@ public class UIBase : MonoBehaviour
         ValidateRoot();
         if (onShow != null)
             onShow.Invoke();
-        root.SetActive(true);
+        if (moveToLastSiblingOnShow)
+            root.transform.SetAsLastSibling();
+        if (UIExtension == null)
+            root.SetActive(true);
+        else
+            UIExtension.Show();
     }
 
     public virtual void Hide()
@@ -42,7 +67,10 @@ public class UIBase : MonoBehaviour
         ValidateRoot();
         if (onHide != null)
             onHide.Invoke();
-        root.SetActive(false);
+        if (UIExtension == null)
+            root.SetActive(false);
+        else
+            UIExtension.Hide();
     }
 
     public virtual bool IsVisible()

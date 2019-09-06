@@ -24,10 +24,10 @@ public class UIMainMenu : MonoBehaviour
     private int selectHead = 0;
     private int selectWeapon = 0;
     // Showing character / items
-    private CharacterModel characterModel;
-    private CharacterData characterData;
-    private HeadData headData;
-    private WeaponData weaponData;
+    public CharacterModel characterModel;
+    public CharacterData characterData;
+    public HeadData headData;
+    public WeaponData weaponData;
 
     public int SelectCharacter
     {
@@ -88,10 +88,7 @@ public class UIMainMenu : MonoBehaviour
 
     private void Start()
     {
-        inputName.text = PlayerSave.GetPlayerName();
-        SelectHead = PlayerSave.GetHead();
-        SelectCharacter = PlayerSave.GetCharacter();
-        SelectWeapon = PlayerSave.GetWeapon();
+        OnClickLoadData();
     }
 
     private void Update()
@@ -199,6 +196,14 @@ public class UIMainMenu : MonoBehaviour
         PlayerSave.SetWeapon(SelectWeapon);
         PlayerSave.SetPlayerName(inputName.text);
         PhotonNetwork.LocalPlayer.NickName = PlayerSave.GetPlayerName();
+    }
+
+    public void OnClickLoadData()
+    {
+        inputName.text = PlayerSave.GetPlayerName();
+        SelectHead = PlayerSave.GetHead();
+        SelectCharacter = PlayerSave.GetCharacter();
+        SelectWeapon = PlayerSave.GetWeapon();
     }
 
     public void UpdateAvailableItems()

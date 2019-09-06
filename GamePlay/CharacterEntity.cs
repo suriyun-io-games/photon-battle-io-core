@@ -793,8 +793,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
             animator.SetBool("IsDash", isDashing);
         }
 
-        if (weaponData != null)
-            animator.SetInteger("WeaponAnimId", weaponData.weaponAnimId);
+        animator.SetInteger("WeaponAnimId", weaponData != null ? weaponData.weaponAnimId : 0);
 
         animator.SetBool("IsIdle", !animator.GetBool("IsDead") && !animator.GetBool("DoAction") && animator.GetBool("IsGround"));
 

@@ -66,9 +66,19 @@ public class GameNetworkManager : BaseNetworkGameManager
             if (data != null)
                 selectCustomEquipments.Add(data.GetHashId());
         }
-        character.CmdInit(GameInstance.GetAvailableHead(PlayerSave.GetHead()).GetHashId(),
-            GameInstance.GetAvailableCharacter(PlayerSave.GetCharacter()).GetHashId(),
-            GameInstance.GetAvailableWeapon(PlayerSave.GetWeapon()).GetHashId(),
+        var headId = 0;
+        var characterId = 0;
+        var weaponId = 0;
+        var savedHead = GameInstance.GetAvailableHead(PlayerSave.GetHead());
+        var savedCharacter = GameInstance.GetAvailableCharacter(PlayerSave.GetCharacter());
+        var savedWeapon = GameInstance.GetAvailableWeapon(PlayerSave.GetWeapon());
+        if (savedHead != null)
+            headId = savedHead.GetHashId();
+        if (savedCharacter != null)
+            characterId = savedCharacter.GetHashId();
+        if (savedWeapon != null)
+            weaponId = savedWeapon.GetHashId();
+        character.CmdInit(headId, characterId, weaponId,
             selectCustomEquipments.ToArray(),
             "");
     }

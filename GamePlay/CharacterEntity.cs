@@ -680,7 +680,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
         if (canControl)
         {
             inputMove = new Vector2(InputManager.GetAxis("Horizontal", false), InputManager.GetAxis("Vertical", false));
-
+            inputMove.Normalize();
             // Jump
             if (!inputJump)
                 inputJump = InputManager.GetButtonDown("Jump") && isGround && !isDashing;
@@ -838,6 +838,9 @@ public class CharacterEntity : BaseNetworkGameCharacter
         var dashDirection = new Vector3(dashInputMove.x, 0, dashInputMove.y);
 
         Move(isDashing ? dashDirection : moveDirection);
+        // Turn character to move direction
+        if (inputDirection.magnitude <= 0 && inputMove.magnitude > 0)
+            inputDirection = inputMove;
         Rotate(isDashing ? dashInputMove : inputDirection);
 
         if (inputAttack && GameplayManager.Singleton.CanAttack(this))

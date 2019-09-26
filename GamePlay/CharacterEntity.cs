@@ -680,7 +680,6 @@ public class CharacterEntity : BaseNetworkGameCharacter
         if (canControl)
         {
             inputMove = new Vector2(InputManager.GetAxis("Horizontal", false), InputManager.GetAxis("Vertical", false));
-            inputMove.Normalize();
             // Jump
             if (!inputJump)
                 inputJump = InputManager.GetButtonDown("Jump") && isGround && !isDashing;
@@ -811,7 +810,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
 
     protected virtual void Move(Vector3 direction)
     {
-        if (direction.magnitude != 0)
+        if (direction.magnitude > 0)
         {
             if (direction.magnitude > 1)
                 direction = direction.normalized;

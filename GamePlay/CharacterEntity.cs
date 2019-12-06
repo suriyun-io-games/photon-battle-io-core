@@ -1476,15 +1476,18 @@ public class CharacterEntity : BaseNetworkGameCharacter
         if (characterModel != null)
             characterModel.ClearCustomModels();
         customEquipmentDict.Clear();
-        for (var i = 0; i < _selectCustomEquipments.Length; ++i)
+        if (_selectCustomEquipments != null)
         {
-            var customEquipmentData = GameInstance.GetCustomEquipment(_selectCustomEquipments[i]);
-            if (customEquipmentData != null &&
-                !customEquipmentDict.ContainsKey(customEquipmentData.containerIndex))
+            for (var i = 0; i < _selectCustomEquipments.Length; ++i)
             {
-                customEquipmentDict[customEquipmentData.containerIndex] = customEquipmentData;
-                if (characterModel != null)
-                    characterModel.SetCustomModel(customEquipmentData.containerIndex, customEquipmentData.modelObject);
+                var customEquipmentData = GameInstance.GetCustomEquipment(_selectCustomEquipments[i]);
+                if (customEquipmentData != null &&
+                    !customEquipmentDict.ContainsKey(customEquipmentData.containerIndex))
+                {
+                    customEquipmentDict[customEquipmentData.containerIndex] = customEquipmentData;
+                    if (characterModel != null)
+                        characterModel.SetCustomModel(customEquipmentData.containerIndex, customEquipmentData.modelObject);
+                }
             }
         }
         UpdateCharacterModelHiddingState();

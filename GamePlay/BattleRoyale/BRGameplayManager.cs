@@ -39,21 +39,21 @@ public enum BRSpawnType : byte
 
 public class BRGameplayManager : GameplayManager
 {
-    public const string CUSTOM_ROOM_CURRENT_PATTERN = "iCP";
-    public const string CUSTOM_ROOM_CURRENT_CIRCLE = "iCC";
-    public const string CUSTOM_ROOM_CURRENT_RADIUS = "fCR";
-    public const string CUSTOM_ROOM_CURRENT_CENTER_POSITION = "v3CCP";
-    public const string CUSTOM_ROOM_NEXT_RADIUS = "fNR";
-    public const string CUSTOM_ROOM_NEXT_CENTER_POSITION = "v3NCP";
-    public const string CUSTOM_ROOM_CURRENT_STATE = "spCS";
-    public const string CUSTOM_ROOM_CURRENT_DURATION = "fCD";
-    public const string CUSTOM_ROOM_CURRENT_COUNTDOWN = "fCCD";
-    public const string CUSTOM_ROOM_SPAWNER_MOVE_FROM = "v3SMF";
-    public const string CUSTOM_ROOM_SPAWNER_MOVE_TO = "v3SMT";
-    public const string CUSTOM_ROOM_SPAWNER_MOVE_DURATION = "v3SMD";
-    public const string CUSTOM_ROOM_SPAWNER_MOVE_COUNTDOWN = "v3SMCD";
-    public const string CUSTOM_ROOM_COUNT_ALIVE_CHARACTERS = "iALI";
-    public const string CUSTOM_ROOM_COUNT_ALL_CHARACTERS = "iALL";
+    public const string CUSTOM_ROOM_CURRENT_PATTERN = "b01";
+    public const string CUSTOM_ROOM_CURRENT_CIRCLE = "b02";
+    public const string CUSTOM_ROOM_CURRENT_RADIUS = "b03";
+    public const string CUSTOM_ROOM_CURRENT_CENTER_POSITION = "b04";
+    public const string CUSTOM_ROOM_NEXT_RADIUS = "b05";
+    public const string CUSTOM_ROOM_NEXT_CENTER_POSITION = "b06";
+    public const string CUSTOM_ROOM_CURRENT_STATE = "b07";
+    public const string CUSTOM_ROOM_CURRENT_DURATION = "b08";
+    public const string CUSTOM_ROOM_CURRENT_COUNTDOWN = "b09";
+    public const string CUSTOM_ROOM_SPAWNER_MOVE_FROM = "b10";
+    public const string CUSTOM_ROOM_SPAWNER_MOVE_TO = "b11";
+    public const string CUSTOM_ROOM_SPAWNER_MOVE_DURATION = "b12";
+    public const string CUSTOM_ROOM_SPAWNER_MOVE_COUNTDOWN = "b13";
+    public const string CUSTOM_ROOM_COUNT_ALIVE_CHARACTERS = "b14";
+    public const string CUSTOM_ROOM_COUNT_ALL_CHARACTERS = "b15";
 
     [Header("Battle Royale")]
     public BRSpawnType spawnType;
@@ -62,6 +62,10 @@ public class BRGameplayManager : GameplayManager
     public SimpleCubeData spawnableArea;
     public BRPattern[] patterns;
     public GameObject circleObject;
+    public GameObject airplanePrefab;
+
+    private bool spawnedAirplane;
+    private GameObject airplane;
 
     #region Sync Vars
     public int currentPattern
@@ -220,7 +224,28 @@ public class BRGameplayManager : GameplayManager
         if (CurrentCountdown > 0)
             CurrentCountdown -= Time.unscaledDeltaTime;
         if (SpawnerMoveCountdown > 0)
+        {
             SpawnerMoveCountdown -= Time.unscaledDeltaTime;
+            if (!spawnedAirplane)
+            {
+                spawnedAirplane = true;
+                if (airplanePrefab != null)
+                    airplane = Instantiate(airplanePrefab);
+            }
+            if (airplane != null)
+            {
+                airplane.transform.position = GetSpawnerPosition();
+                airplane.transform.rotation = GetSpawnerRotation();
+            }
+        }
+        else
+        {
+            if (spawnedAirplane)
+            {
+                if (airplane != null)
+                    Destroy(airplane);
+            }
+        }
         if (PhotonNetwork.IsMasterClient)
         {
             secondCollector += Time.unscaledDeltaTime;

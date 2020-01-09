@@ -22,6 +22,7 @@ public class HideArea : MonoBehaviour
 
     private void Awake()
     {
+        gameObject.layer = Physics.IgnoreRaycastLayer;
         var collider = GetComponent<Collider>();
         collider.isTrigger = true;
 
@@ -33,9 +34,13 @@ public class HideArea : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
+        if (other.gameObject.layer == Physics.IgnoreRaycastLayer)
+            return;
+
         tempCharacter = other.GetComponent<CharacterEntity>();
         if (tempCharacter == null)
             return;
+
         insideCharacters.Add(tempCharacter);
         if (tempCharacter == BaseNetworkGameCharacter.Local)
         {
@@ -54,9 +59,13 @@ public class HideArea : MonoBehaviour
 
     private void OnTriggerExit(Collider other)
     {
+        if (other.gameObject.layer == Physics.IgnoreRaycastLayer)
+            return;
+
         tempCharacter = other.GetComponent<CharacterEntity>();
         if (tempCharacter == null)
             return;
+
         insideCharacters.Remove(tempCharacter);
         if (tempCharacter == BaseNetworkGameCharacter.Local)
         {
@@ -71,5 +80,6 @@ public class HideArea : MonoBehaviour
             if (insideCharacter == BaseNetworkGameCharacter.Local) continue;
             insideCharacter.IsHidding = !isMineCharacterInside;
         }
+        tempCharacter.IsHidding = false;
     }
 }

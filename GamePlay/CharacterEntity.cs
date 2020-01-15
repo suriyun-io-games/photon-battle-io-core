@@ -343,27 +343,9 @@ public class CharacterEntity : BaseNetworkGameCharacter
                 canvas.enabled = !isHidding;
         }
     }
-
-    private Transform tempTransform;
-    public Transform TempTransform
-    {
-        get
-        {
-            if (tempTransform == null)
-                tempTransform = GetComponent<Transform>();
-            return tempTransform;
-        }
-    }
-    private Rigidbody tempRigidbody;
-    public Rigidbody TempRigidbody
-    {
-        get
-        {
-            if (tempRigidbody == null)
-                tempRigidbody = GetComponent<Rigidbody>();
-            return tempRigidbody;
-        }
-    }
+    public Transform CacheTransform { get; private set; }
+    public Rigidbody CacheRigidbody { get; private set; }
+    public Collider CacheCollider { get; private set; }
 
     public virtual CharacterStats SumAddStats
     {
@@ -507,12 +489,15 @@ public class CharacterEntity : BaseNetworkGameCharacter
     {
         base.Awake();
         gameObject.layer = GameInstance.Singleton.characterLayer;
+        CacheTransform = transform;
+        CacheRigidbody = GetComponent<Rigidbody>();
+        CacheCollider = GetComponent<Collider>();
         if (damageLaunchTransform == null)
-            damageLaunchTransform = TempTransform;
+            damageLaunchTransform = CacheTransform;
         if (effectTransform == null)
-            effectTransform = TempTransform;
+            effectTransform = CacheTransform;
         if (characterModelTransform == null)
-            characterModelTransform = TempTransform;
+            characterModelTransform = CacheTransform;
         foreach (var localPlayerObject in localPlayerObjects)
         {
             localPlayerObject.SetActive(false);
@@ -567,7 +552,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
         if (photonView.IsMine)
         {
             var followCam = FindObjectOfType<FollowCamera>();
-            followCam.target = TempTransform;
+            followCam.target = CacheTransform;
             targetCamera = followCam.GetComponent<Camera>();
             var uiGameplay = FindObjectOfType<UIGameplay>();
             if (uiGameplay != null)
@@ -630,10 +615,10 @@ public class CharacterEntity : BaseNetworkGameCharacter
     private void FixedUpdate()
     {
         if (!previousPosition.HasValue)
-            previousPosition = TempTransform.position;
-        var currentMove = TempTransform.position - previousPosition.Value;
+            previousPosition = CacheTransform.position;
+        var currentMove = CacheTransform.position - previousPosition.Value;
         currentVelocity = currentMove / Time.deltaTime;
-        previousPosition = TempTransform.position;
+        previousPosition = CacheTransform.position;
 
         if (NetworkManager != null && NetworkManager.IsMatchEnded)
             return;
@@ -720,7 +705,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
                 }
                 else
                 {
-                    inputDirection = (InputManager.MousePosition() - targetCamera.WorldToScreenPoint(TempTransform.position)).normalized;
+                    inputDirection = (InputManager.MousePosition() - targetCamera.WorldToScreenPoint(CacheTransform.position)).normalized;
                     if (canAttack)
                     {
                         inputAttack = InputManager.GetButton("Fire1");
@@ -751,7 +736,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
                     if (isMobileInput)
                         dashInputMove = inputMove.normalized;
                     else
-                        dashInputMove = new Vector2(TempTransform.forward.x, TempTransform.forward.z).normalized;
+                        dashInputMove = new Vector2(CacheTransform.forward.x, CacheTransform.forward.z).normalized;
                     inputAttack = false;
                     dashingTime = Time.unscaledTime;
                     CmdDash();
@@ -816,12 +801,12 @@ public class CharacterEntity : BaseNetworkGameCharacter
             var targetVelocity = direction * targetSpeed;
 
             // Apply a force that attempts to reach our target velocity
-            Vector3 velocity = TempRigidbody.velocity;
+            Vector3 velocity = CacheRigidbody.velocity;
             Vector3 velocityChange = (targetVelocity - velocity);
             velocityChange.x = Mathf.Clamp(velocityChange.x, -targetSpeed, targetSpeed);
             velocityChange.y = 0;
             velocityChange.z = Mathf.Clamp(velocityChange.z, -targetSpeed, targetSpeed);
-            TempRigidbody.AddForce(velocityChange, ForceMode.VelocityChange);
+            CacheRigidbody.AddForce(velocityChange, ForceMode.VelocityChange);
         }
     }
 
@@ -851,10 +836,10 @@ public class CharacterEntity : BaseNetworkGameCharacter
             releasedUseSkillHotkeyId = -1;
         }
 
-        var velocity = TempRigidbody.velocity;
+        var velocity = CacheRigidbody.velocity;
         if (isGround && inputJump)
         {
-            TempRigidbody.velocity = new Vector3(velocity.x, CalculateJumpVerticalSpeed(), velocity.z);
+            CacheRigidbody.velocity = new Vector3(velocity.x, CalculateJumpVerticalSpeed(), velocity.z);
             isGround = false;
             inputJump = false;
         }
@@ -885,7 +870,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
         {
             int newRotation = (int)(Quaternion.LookRotation(new Vector3(direction.x, 0, direction.y)).eulerAngles.y + targetCamera.transform.eulerAngles.y);
             Quaternion targetRotation = Quaternion.Euler(0, newRotation, 0);
-            TempTransform.rotation = targetRotation;
+            CacheTransform.rotation = targetRotation;
         }
     }
 
@@ -999,7 +984,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
 
             // Random play shoot sounds
             if (attackFx != null && attackFx.Length > 0 && AudioManager.Singleton != null)
-                AudioSource.PlayClipAtPoint(attackFx[Random.Range(0, weaponData.attackFx.Length - 1)], TempTransform.position, AudioManager.Singleton.sfxVolumeSetting.Level);
+                AudioSource.PlayClipAtPoint(attackFx[Random.Range(0, weaponData.attackFx.Length - 1)], CacheTransform.position, AudioManager.Singleton.sfxVolumeSetting.Level);
 
             // Wait till animation end
             yield return new WaitForSeconds((animationDuration - launchDuration) / speed);
@@ -1120,7 +1105,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
             ServerInvincible();
             OnSpawn();
             var position = GetSpawnPosition();
-            TempTransform.position = position;
+            CacheTransform.position = position;
             photonView.RPC("RpcTargetSpawn", photonView.Owner, position.x, position.y, position.z);
             ServerRevive();
         }

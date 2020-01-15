@@ -94,8 +94,8 @@ public class BRCharacterEntityExtra : MonoBehaviourPunCallbacks
         // Monster entity does not have to move following the air plane
         if (PhotonNetwork.IsMasterClient && TempCharacterEntity is MonsterEntity)
         {
-            if (!TempCharacterEntity.TempRigidbody.useGravity)
-                TempCharacterEntity.TempRigidbody.useGravity = true;
+            if (!TempCharacterEntity.CacheRigidbody.useGravity)
+                TempCharacterEntity.CacheRigidbody.useGravity = true;
             if (!TempCharacterEntity.enabled)
                 TempCharacterEntity.enabled = true;
             TempCharacterEntity.IsHidding = false;
@@ -134,8 +134,8 @@ public class BRCharacterEntityExtra : MonoBehaviourPunCallbacks
                 botDeadRemoveCalled = true;
                 StartCoroutine(BotDeadRemoveRoutine());
             }
-            if (!TempCharacterEntity.TempRigidbody.useGravity)
-                TempCharacterEntity.TempRigidbody.useGravity = true;
+            if (!TempCharacterEntity.CacheRigidbody.useGravity)
+                TempCharacterEntity.CacheRigidbody.useGravity = true;
             if (!TempCharacterEntity.enabled)
                 TempCharacterEntity.enabled = true;
             TempCharacterEntity.IsHidding = false;
@@ -166,8 +166,8 @@ public class BRCharacterEntityExtra : MonoBehaviourPunCallbacks
                 StartCoroutine(BotSpawnRoutine());
             }
             // Hide character and disable physics while in airplane
-            if (TempCharacterEntity.TempRigidbody.useGravity)
-                TempCharacterEntity.TempRigidbody.useGravity = false;
+            if (TempCharacterEntity.CacheRigidbody.useGravity)
+                TempCharacterEntity.CacheRigidbody.useGravity = false;
             if (TempCharacterEntity.enabled)
                 TempCharacterEntity.enabled = false;
             TempCharacterEntity.IsHidding = true;
@@ -189,7 +189,7 @@ public class BRCharacterEntityExtra : MonoBehaviourPunCallbacks
         if (brGameManager.currentState != BRState.WaitingForPlayers && !isSpawned && PhotonNetwork.IsMasterClient)
         {
             var position = TempCharacterEntity.GetSpawnPosition();
-            TempCharacterEntity.TempTransform.position = position;
+            TempCharacterEntity.CacheTransform.position = position;
             TempCharacterEntity.photonView.RPC("RpcTargetSpawn", TempCharacterEntity.photonView.Owner, position.x, position.y, position.z);
             isSpawned = true;
         }
@@ -264,9 +264,9 @@ public class BRCharacterEntityExtra : MonoBehaviourPunCallbacks
     [PunRPC]
     protected void RpcCharacterSpawned(Vector3 spawnPosition)
     {
-        TempCharacterEntity.TempTransform.position = spawnPosition;
-        TempCharacterEntity.TempRigidbody.useGravity = true;
-        TempCharacterEntity.TempRigidbody.isKinematic = false;
+        TempCharacterEntity.CacheTransform.position = spawnPosition;
+        TempCharacterEntity.CacheRigidbody.useGravity = true;
+        TempCharacterEntity.CacheRigidbody.isKinematic = false;
     }
 
     [PunRPC]

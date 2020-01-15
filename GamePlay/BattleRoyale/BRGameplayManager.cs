@@ -192,7 +192,6 @@ public class BRGameplayManager : GameplayManager
 
     public override bool CanReceiveDamage(CharacterEntity damageReceiver, CharacterEntity attacker)
     {
-        var networkGameplayManager = BaseNetworkGameManager.Singleton;
         if (base.CanReceiveDamage(damageReceiver, attacker))
             return damageReceiver.GetComponent<BRCharacterEntityExtra>().isSpawned;
         return false;
@@ -443,7 +442,7 @@ public class BRGameplayManager : GameplayManager
 
     public Vector3 SpawnCharacter(CharacterEntity character)
     {
-        return character.TempTransform.position = GetSpawnerPosition();
+        return character.CacheTransform.position = GetSpawnerPosition();
     }
 
     [PunRPC]

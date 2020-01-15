@@ -148,8 +148,11 @@ public class GameplayManager : MonoBehaviourPunCallbacks
     public virtual bool CanRespawn(CharacterEntity character)
     {
         var networkGameplayManager = BaseNetworkGameManager.Singleton;
-        if (networkGameplayManager != null && networkGameplayManager.IsMatchEnded)
-            return false;
+        if (networkGameplayManager != null)
+        {
+            if (networkGameplayManager.IsMatchEnded)
+                return false;
+        }
         return true;
     }
 
@@ -169,8 +172,11 @@ public class GameplayManager : MonoBehaviourPunCallbacks
     public virtual bool CanAttack(CharacterEntity character)
     {
         var networkGameplayManager = BaseNetworkGameManager.Singleton;
-        if (networkGameplayManager != null && networkGameplayManager.IsMatchEnded)
-            return false;
+        if (networkGameplayManager != null)
+        {
+            if (networkGameplayManager.IsMatchEnded)
+                return false;
+        }
         return true;
     }
 }

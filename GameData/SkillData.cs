@@ -60,7 +60,7 @@ public class SkillData : ScriptableObject
             // So don't worry about them before damage entity going to spawn
             // Velocity also being set when set `Attacker` too.
             var position = launchTransform.position;
-            var direction = attacker.TempTransform.forward;
+            var direction = attacker.CacheTransform.forward;
 
             var damageEntity = DamageEntity.InstantiateNewEntity(damagePrefab, false, position, direction, attacker.photonView.ViewID, addRotationX, addRotationY);
             damageEntity.weaponDamage = Mathf.CeilToInt(damage);

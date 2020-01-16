@@ -928,7 +928,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
                 {
                     // Launch damage entity on server only
                     if (PhotonNetwork.IsMasterClient)
-                        weaponData.Launch(this, attackAnimation.isAnimationForLeftHandWeapon);
+                        weaponData.Launch(this, attackingActionId);
                 }));
                 // If player still attacking, random new attacking action id
                 if (PhotonNetwork.IsMasterClient && attackingActionId >= 0 && weaponData != null)

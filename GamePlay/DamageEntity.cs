@@ -190,7 +190,7 @@ public class DamageEntity : MonoBehaviour
 
     public static DamageEntity InstantiateNewEntityByWeapon(
         int weaponId,
-        bool isLeftHandWeapon,
+        int actionId,
         Vector3 position,
         Vector3 direction,
         int attackerViewId,
@@ -199,7 +199,12 @@ public class DamageEntity : MonoBehaviour
     {
         WeaponData weaponData = null;
         if (GameInstance.Weapons.TryGetValue(weaponId, out weaponData))
-            return InstantiateNewEntity(weaponData.damagePrefab, isLeftHandWeapon, position, direction, attackerViewId, addRotationX, addRotationY);
+        {
+            var damagePrefab = weaponData.damagePrefab;
+            if (weaponData.AttackAnimations[actionId].damagePrefab != null)
+                damagePrefab = weaponData.AttackAnimations[actionId].damagePrefab;
+            return InstantiateNewEntity(weaponData.damagePrefab, weaponData.AttackAnimations[actionId].isAnimationForLeftHandWeapon, position, direction, attackerViewId, addRotationX, addRotationY);
+        }
         return null;
     }
 

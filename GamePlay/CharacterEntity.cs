@@ -994,14 +994,14 @@ public class CharacterEntity : BaseNetworkGameCharacter
         }
     }
 
-    public void ReceiveDamage(CharacterEntity attacker, int damage, byte type, int dataId)
+    public virtual bool ReceiveDamage(CharacterEntity attacker, int damage, byte type, int dataId)
     {
-        var gameplayManager = GameplayManager.Singleton;
         if (Hp <= 0 || isInvincible)
-            return;
+            return false;
 
+        var gameplayManager = GameplayManager.Singleton;
         if (!gameplayManager.CanReceiveDamage(this, attacker))
-            return;
+            return false;
 
         photonView.RPC("RpcEffect", RpcTarget.All, attacker.photonView.ViewID, type, dataId);
         int reduceHp = damage - TotalDefend;
@@ -1024,6 +1024,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
                 ++dieCount;
             }
         }
+        return true;
     }
     
     public void KilledTarget(CharacterEntity target)

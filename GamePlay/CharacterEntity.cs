@@ -924,11 +924,12 @@ public class CharacterEntity : BaseNetworkGameCharacter
             if (weaponData != null &&
                 weaponData.AttackAnimations.TryGetValue(attackingActionId, out attackAnimation))
             {
+                int actionId = attackingActionId;
                 yield return StartCoroutine(PlayAttackAnimationRoutine(animator, attackAnimation, weaponData.attackFx, () =>
                 {
                     // Launch damage entity on server only
                     if (PhotonNetwork.IsMasterClient)
-                        weaponData.Launch(this, attackingActionId);
+                        weaponData.Launch(this, actionId);
                 }));
                 // If player still attacking, random new attacking action id
                 if (PhotonNetwork.IsMasterClient && attackingActionId >= 0 && weaponData != null)

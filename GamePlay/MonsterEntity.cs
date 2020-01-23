@@ -197,7 +197,7 @@ public class MonsterEntity : CharacterEntity
 
         if (enemy != null)
         {
-            if (Vector3.Distance(spawnPosition, enemy.CacheTransform.position) < followEnemyDistance)
+            if (Vector3.Distance(spawnPosition, CacheTransform.position) < followEnemyDistance)
             {
                 if (Vector3.Distance(enemy.CacheTransform.position, CacheTransform.position) >= GetAttackRange())
                 {
@@ -215,6 +215,8 @@ public class MonsterEntity : CharacterEntity
                 navPaths.Clear();
                 targetPosition = CacheTransform.position;
                 targetPosition.y = 0;
+                enemy = null;
+                lastUpdateMovementTime = Time.unscaledTime - updateMovementDuration;
             }
         }
 
@@ -341,7 +343,8 @@ public class MonsterEntity : CharacterEntity
     private bool FindEnemy(out CharacterEntity enemy)
     {
         enemy = null;
-        var colliders = Physics.OverlapSphere(CacheTransform.position, detectEnemyDistance + GetAttackRange());
+        var attackRange = GetAttackRange();
+        var colliders = Physics.OverlapSphere(CacheTransform.position, detectEnemyDistance);
         foreach (var collider in colliders)
         {
             var character = collider.GetComponent<CharacterEntity>();
@@ -350,7 +353,8 @@ public class MonsterEntity : CharacterEntity
                 (character as MonsterEntity).monsterTypeId == monsterTypeId)
                 continue;
 
-            if (character != null && character != this && character.Hp > 0)
+            if (character != null && character != this && character.Hp > 0 && 
+                Vector3.Distance(spawnPosition, character.CacheTransform.position) < followEnemyDistance)
             {
                 enemy = character;
                 return true;

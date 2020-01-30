@@ -44,19 +44,33 @@ public class GameInstance : BaseNetworkGameInstance
     {
         base.Start();
 
+        Skills.Clear();
         Heads.Clear();
         foreach (var head in heads)
         {
+            if (head.skills != null)
+            {
+                foreach (var skill in head.skills)
+                {
+                    Skills[skill.GetHashId()] = skill;
+                }
+            }
             Heads[head.GetHashId()] = head;
         }
 
         Characters.Clear();
         foreach (var character in characters)
         {
+            if (character.skills != null)
+            {
+                foreach (var skill in character.skills)
+                {
+                    Skills[skill.GetHashId()] = skill;
+                }
+            }
             Characters[character.GetHashId()] = character;
         }
 
-        Skills.Clear();
         Weapons.Clear();
         foreach (var weapon in weapons)
         {
@@ -74,6 +88,13 @@ public class GameInstance : BaseNetworkGameInstance
         CustomEquipments.Clear();
         foreach (var customEquipment in customEquipments)
         {
+            if (customEquipment.skills != null)
+            {
+                foreach (var skill in customEquipment.skills)
+                {
+                    Skills[skill.GetHashId()] = skill;
+                }
+            }
             CustomEquipments[customEquipment.GetHashId()] = customEquipment;
         }
 

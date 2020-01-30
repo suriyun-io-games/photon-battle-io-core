@@ -47,8 +47,8 @@ public class CharacterEntity : BaseNetworkGameCharacter
     protected int _selectWeapon;
     protected int[] _selectCustomEquipments;
     protected bool _isInvincible;
-    protected int _attackingActionId;
-    protected short _usingSkillHotkeyId;
+    protected int _attackingActionId = -1;
+    protected short _usingSkillHotkeyId = -1;
     protected CharacterStats _addStats;
     protected string _extra;
     protected int _defaultSelectWeapon;
@@ -227,7 +227,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
         get { return _attackingActionId; }
         set
         {
-            if (PhotonNetwork.IsMasterClient && value != attackingActionId)
+            if (photonView.IsMine && value != attackingActionId)
             {
                 _attackingActionId = value;
                 photonView.RPC("RpcUpdateAttackingActionId", RpcTarget.Others, value);
@@ -239,7 +239,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
         get { return _usingSkillHotkeyId; }
         set
         {
-            if (PhotonNetwork.IsMasterClient && value != usingSkillHotkeyId)
+            if (photonView.IsMine && value != usingSkillHotkeyId)
             {
                 _usingSkillHotkeyId = value;
                 photonView.RPC("RpcUpdateUsingSkillHotkeyId", RpcTarget.Others, value);
@@ -310,8 +310,8 @@ public class CharacterEntity : BaseNetworkGameCharacter
     protected Dictionary<sbyte, SkillData> skills = new Dictionary<sbyte, SkillData>();
     protected float[] lastSkillUseTimes = new float[8];
     protected bool inputCancelUsingSkill;
-    protected sbyte holdingUseSkillHotkeyId;
-    protected sbyte releasedUseSkillHotkeyId;
+    protected sbyte holdingUseSkillHotkeyId = -1;
+    protected sbyte releasedUseSkillHotkeyId = -1;
     protected Vector3? previousPosition;
     protected Vector3 currentVelocity;
 
@@ -479,8 +479,6 @@ public class CharacterEntity : BaseNetworkGameCharacter
         selectWeapon = 0;
         selectCustomEquipments = new int[0];
         isInvincible = false;
-        attackingActionId = -1;
-        usingSkillHotkeyId = -1;
         addStats = new CharacterStats();
         extra = "";
     }
@@ -577,7 +575,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
             if (!PhotonNetwork.IsMasterClient && photonView.IsMine && Time.unscaledTime - deathTime >= DISCONNECT_WHEN_NOT_RESPAWN_DURATION)
                 GameNetworkManager.Singleton.LeaveRoom();
 
-            if (PhotonNetwork.IsMasterClient)
+            if (photonView.IsMine)
             {
                 attackingActionId = -1;
                 usingSkillHotkeyId = -1;
@@ -884,13 +882,18 @@ public class CharacterEntity : BaseNetworkGameCharacter
     protected void Attack()
     {
         if (attackingActionId < 0 && photonView.IsMine)
-            CmdAttack();
+        {
+            if (weaponData != null)
+                attackingActionId = weaponData.GetRandomAttackAnimation().actionId;
+            else
+                attackingActionId = -1;
+        }
     }
 
     protected void StopAttack()
     {
         if (attackingActionId >= 0 && photonView.IsMine)
-            CmdStopAttack();
+            attackingActionId = -1;
     }
 
     public void UseSkill(sbyte hotkeyId)
@@ -902,7 +905,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
             GetSkillCoolDownCount(hotkeyId) > skill.coolDown)
         {
             lastSkillUseTimes[hotkeyId] = Time.unscaledTime;
-            CmdUseSkill(hotkeyId);
+            usingSkillHotkeyId = hotkeyId;
         }
     }
 
@@ -919,16 +922,15 @@ public class CharacterEntity : BaseNetworkGameCharacter
             characterModel.TempAnimator != null)
         {
             isPlayingAttackAnim = true;
-            var animator = characterModel.TempAnimator;
             AttackAnimation attackAnimation;
             if (weaponData != null &&
                 weaponData.AttackAnimations.TryGetValue(attackingActionId, out attackAnimation))
             {
                 int actionId = attackingActionId;
-                yield return StartCoroutine(PlayAttackAnimationRoutine(animator, attackAnimation, weaponData.attackFx, () =>
+                yield return StartCoroutine(PlayAttackAnimationRoutine(attackAnimation, weaponData.attackFx, () =>
                 {
-                    // Launch damage entity on server only
-                    if (PhotonNetwork.IsMasterClient)
+                    // Launch damage entity on owning client then update on other clients
+                    if (photonView.IsMine)
                         weaponData.Launch(this, actionId);
                 }));
                 // If player still attacking, random new attacking action id
@@ -947,14 +949,13 @@ public class CharacterEntity : BaseNetworkGameCharacter
             characterModel.TempAnimator != null)
         {
             isPlayingUseSkillAnim = true;
-            var animator = characterModel.TempAnimator;
             SkillData skillData;
             if (skills.TryGetValue((sbyte)usingSkillHotkeyId, out skillData))
             {
-                yield return StartCoroutine(PlayAttackAnimationRoutine(animator, skillData.attackAnimation, skillData.attackFx, () =>
+                yield return StartCoroutine(PlayAttackAnimationRoutine(skillData.attackAnimation, skillData.attackFx, () =>
                 {
-                    // Launch damage entity on server only
-                    if (PhotonNetwork.IsMasterClient)
+                    // Launch damage entity on owning client then update on other clients
+                    if (photonView.IsMine)
                         skillData.Launch(this);
                 }));
             }
@@ -963,8 +964,9 @@ public class CharacterEntity : BaseNetworkGameCharacter
         }
     }
 
-    IEnumerator PlayAttackAnimationRoutine(Animator animator, AttackAnimation attackAnimation, AudioClip[] attackFx, System.Action onAttack)
+    IEnumerator PlayAttackAnimationRoutine(AttackAnimation attackAnimation, AudioClip[] attackFx, System.Action onAttack)
     {
+        var animator = characterModel.TempAnimator;
         if (animator != null && attackAnimation != null)
         {
             // Play attack animation
@@ -1190,43 +1192,6 @@ public class CharacterEntity : BaseNetworkGameCharacter
     protected void RpcServerRespawn(bool isWatchedAds)
     {
         ServerRespawn(isWatchedAds);
-    }
-    
-    public void CmdAttack()
-    {
-        photonView.RPC("RpcServerAttack", RpcTarget.MasterClient);
-    }
-
-    [PunRPC]
-    protected void RpcServerAttack()
-    {
-        if (weaponData != null)
-            attackingActionId = weaponData.GetRandomAttackAnimation().actionId;
-        else
-            attackingActionId = -1;
-    }
-    
-    public void CmdStopAttack()
-    {
-        photonView.RPC("RpcServerStopAttack", RpcTarget.MasterClient);
-    }
-
-    [PunRPC]
-    protected void RpcServerStopAttack()
-    {
-        attackingActionId = -1;
-    }
-
-    public void CmdUseSkill(sbyte hotkeyId)
-    {
-        photonView.RPC("RpcUseSkill", RpcTarget.MasterClient, hotkeyId);
-    }
-
-    [PunRPC]
-    protected void RpcUseSkill(sbyte hotkeyId)
-    {
-        if (skills.ContainsKey(hotkeyId))
-            usingSkillHotkeyId = hotkeyId;
     }
     
     public void CmdAddAttribute(string name)

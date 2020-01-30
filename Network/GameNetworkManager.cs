@@ -15,29 +15,45 @@ public class GameNetworkManager : BaseNetworkGameManager
     protected void RpcCharacterAttack(
         int weaponId,
         byte actionId,
-        Vector3 position,
-        Vector3 direction,
+        short dirX,
+        short dirY,
+        short dirZ,
         int attackerViewId,
         float addRotationX,
-        float addRotationY)
+        float addRotationY,
+        int damage)
     {
         // Instantiates damage entities on clients only
-        if (!PhotonNetwork.IsMasterClient)
-            DamageEntity.InstantiateNewEntityByWeapon(weaponId, actionId, position, direction, attackerViewId, addRotationX, addRotationY);
+        var direction = new Vector3((float)dirX * 0.01f, (float)dirY * 0.01f, (float)dirZ * 0.01f);
+        var damageEntity = DamageEntity.InstantiateNewEntityByWeapon(weaponId, actionId, direction, attackerViewId, addRotationX, addRotationY);
+        if (damageEntity)
+        {
+            damageEntity.weaponDamage = damage;
+            damageEntity.hitEffectType = CharacterEntity.RPC_EFFECT_DAMAGE_HIT;
+            damageEntity.relateDataId = weaponId;
+        }
     }
 
     [PunRPC]
     protected void RpcCharacterUseSkill(
-        int weaponId,
-        Vector3 position,
-        Vector3 direction,
+        int skillId,
+        short dirX,
+        short dirY,
+        short dirZ,
         int attackerViewId,
         float addRotationX,
-        float addRotationY)
+        float addRotationY,
+        int damage)
     {
         // Instantiates damage entities on clients only
-        if (!PhotonNetwork.IsMasterClient)
-            DamageEntity.InstantiateNewEntityBySkill(weaponId, position, direction, attackerViewId, addRotationX, addRotationY);
+        var direction = new Vector3((float)dirX * 0.01f, (float)dirY * 0.01f, (float)dirZ * 0.01f);
+        var damageEntity = DamageEntity.InstantiateNewEntityBySkill(skillId, direction, attackerViewId, addRotationX, addRotationY);
+        if (damageEntity)
+        {
+            damageEntity.weaponDamage = damage;
+            damageEntity.hitEffectType = CharacterEntity.RPC_EFFECT_SKILL_HIT;
+            damageEntity.relateDataId = skillId;
+        }
     }
 
     [PunRPC]

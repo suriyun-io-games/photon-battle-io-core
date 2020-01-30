@@ -33,9 +33,9 @@ public class SkillData : ScriptableObject
 
     public void Launch(CharacterEntity attacker)
     {
-        if (attacker == null || !PhotonNetwork.IsMasterClient)
+        if (attacker == null || !attacker.photonView.IsMine)
             return;
-
+        
         var gameNetworkManager = GameNetworkManager.Singleton;
         var gameplayManager = GameplayManager.Singleton;
         var spread = 1 + spreadDamages;
@@ -54,20 +54,30 @@ public class SkillData : ScriptableObject
 
         for (var i = 0; i < spread; ++i)
         {
-            Transform launchTransform;
-            attacker.GetDamageLaunchTransform(false, out launchTransform);
             // An transform's rotation, position will be set when set `Attacker`
             // So don't worry about them before damage entity going to spawn
             // Velocity also being set when set `Attacker` too.
-            var position = launchTransform.position;
             var direction = attacker.CacheTransform.forward;
 
-            var damageEntity = DamageEntity.InstantiateNewEntity(damagePrefab, false, position, direction, attacker.photonView.ViewID, addRotationX, addRotationY);
-            damageEntity.weaponDamage = Mathf.CeilToInt(damage);
-            damageEntity.hitEffectType = CharacterEntity.RPC_EFFECT_SKILL_HIT;
-            damageEntity.relateDataId = GetHashId();
+            var damageEntity = DamageEntity.InstantiateNewEntityBySkill(GetHashId(), direction, attacker.photonView.ViewID, addRotationX, addRotationY);
+            if (damageEntity)
+            {
+                damageEntity.weaponDamage = Mathf.CeilToInt(damage);
+                damageEntity.hitEffectType = CharacterEntity.RPC_EFFECT_SKILL_HIT;
+                damageEntity.relateDataId = GetHashId();
+            }
 
-            gameNetworkManager.photonView.RPC("RpcCharacterUseSkill", RpcTarget.Others, GetHashId(), position, direction, attacker.photonView.ViewID, addRotationX, addRotationY);
+            gameNetworkManager.photonView.RPC("RpcCharacterUseSkill", 
+                RpcTarget.Others,
+                GetHashId(),
+                (short)(direction.x * 100f),
+                (short)(direction.y * 100f),
+                (short)(direction.z * 100f),
+                attacker.photonView.ViewID,
+                addRotationX,
+                addRotationY,
+                Mathf.CeilToInt(damage));
+
             addRotationY += addingRotationY;
         }
 

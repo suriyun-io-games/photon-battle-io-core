@@ -20,12 +20,9 @@ public class DamageEntity : MonoBehaviour
     private int attackerViewId;
     private float addRotationX;
     private float addRotationY;
-    [HideInInspector]
-    public int weaponDamage;
-    [HideInInspector]
-    public byte hitEffectType;
-    [HideInInspector]
-    public int relateDataId;
+    public int weaponDamage { get; set; }
+    public byte hitEffectType { get; set; }
+    public int relateDataId { get; set; }
 
     private CharacterEntity attacker;
     public CharacterEntity Attacker
@@ -191,7 +188,6 @@ public class DamageEntity : MonoBehaviour
     public static DamageEntity InstantiateNewEntityByWeapon(
         int weaponId,
         int actionId,
-        Vector3 position,
         Vector3 direction,
         int attackerViewId,
         float addRotationX,
@@ -203,14 +199,20 @@ public class DamageEntity : MonoBehaviour
             var damagePrefab = weaponData.damagePrefab;
             if (weaponData.AttackAnimations[actionId].damagePrefab != null)
                 damagePrefab = weaponData.AttackAnimations[actionId].damagePrefab;
-            return InstantiateNewEntity(weaponData.damagePrefab, weaponData.AttackAnimations[actionId].isAnimationForLeftHandWeapon, position, direction, attackerViewId, addRotationX, addRotationY);
+            if (damagePrefab)
+                return InstantiateNewEntity(damagePrefab, weaponData.AttackAnimations[actionId].isAnimationForLeftHandWeapon, direction, attackerViewId, addRotationX, addRotationY);
+            else
+                Debug.LogWarning("Can't find weapon damage entity prefab: " + weaponId);
+        }
+        else
+        {
+            Debug.LogWarning("Can't find weapon data: " + weaponId);
         }
         return null;
     }
 
     public static DamageEntity InstantiateNewEntityBySkill(
         int skillId,
-        Vector3 position,
         Vector3 direction,
         int attackerViewId,
         float addRotationX,
@@ -218,14 +220,23 @@ public class DamageEntity : MonoBehaviour
     {
         SkillData skillData = null;
         if (GameInstance.Skills.TryGetValue(skillId, out skillData))
-            return InstantiateNewEntity(skillData.damagePrefab, false, position, direction, attackerViewId, addRotationX, addRotationY);
+        {
+            var damagePrefab = skillData.damagePrefab;
+            if (damagePrefab)
+                return InstantiateNewEntity(damagePrefab, false, direction, attackerViewId, addRotationX, addRotationY);
+            else
+                Debug.LogWarning("Can't find skill damage entity prefab: " + skillId);
+        }
+        else
+        {
+            Debug.LogWarning("Can't find skill data: " + skillId);
+        }
         return null;
     }
 
     public static DamageEntity InstantiateNewEntity(
         DamageEntity prefab,
         bool isLeftHandWeapon,
-        Vector3 position,
         Vector3 direction,
         int attackerViewId,
         float addRotationX,
@@ -243,12 +254,13 @@ public class DamageEntity : MonoBehaviour
         {
             Transform launchTransform;
             attacker.GetDamageLaunchTransform(isLeftHandWeapon, out launchTransform);
-            position = launchTransform.position + attacker.CacheTransform.forward * prefab.spawnForwardOffset;
+            Vector3 position = launchTransform.position + attacker.CacheTransform.forward * prefab.spawnForwardOffset;
+            var rotation = Quaternion.LookRotation(direction, Vector3.up);
+            rotation = Quaternion.Euler(rotation.eulerAngles + new Vector3(addRotationX, addRotationY));
+            var result = Instantiate(prefab, position, rotation);
+            result.InitAttackData(isLeftHandWeapon, attackerViewId, addRotationX, addRotationY);
+            return result;
         }
-        var rotation = Quaternion.LookRotation(direction, Vector3.up);
-        rotation = Quaternion.Euler(rotation.eulerAngles + new Vector3(addRotationX, addRotationY));
-        var result = Instantiate(prefab, position, rotation);
-        result.InitAttackData(isLeftHandWeapon, attackerViewId, addRotationX, addRotationY);
-        return result;
+        return null;
     }
 }

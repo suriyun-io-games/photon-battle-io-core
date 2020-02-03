@@ -14,9 +14,9 @@ public class WeaponData : ItemData
     [Header("SFX")]
     public AudioClip[] attackFx;
     public int weaponAnimId;
-    public readonly Dictionary<int, AttackAnimation> AttackAnimations = new Dictionary<int, AttackAnimation>();
+    public readonly Dictionary<short, AttackAnimation> AttackAnimations = new Dictionary<short, AttackAnimation>();
 
-    public void Launch(CharacterEntity attacker, int actionId)
+    public void Launch(CharacterEntity attacker, byte actionId)
     {
         if (attacker == null || !attacker.photonView.IsMine)
             return;
@@ -50,12 +50,13 @@ public class WeaponData : ItemData
                 damageEntity.weaponDamage = Mathf.CeilToInt(damage);
                 damageEntity.hitEffectType = CharacterEntity.RPC_EFFECT_DAMAGE_HIT;
                 damageEntity.relateDataId = GetHashId();
+                damageEntity.actionId = actionId;
             }
 
             gameNetworkManager.photonView.RPC("RpcCharacterAttack",
                 RpcTarget.Others,
                 GetHashId(),
-                (byte)actionId,
+                actionId,
                 (short)(direction.x * 100f),
                 (short)(direction.y * 100f),
                 (short)(direction.z * 100f),
@@ -67,7 +68,7 @@ public class WeaponData : ItemData
             addRotationY += addingRotationY;
         }
 
-        attacker.photonView.RPC("RpcEffect", RpcTarget.All, attacker.photonView.ViewID, CharacterEntity.RPC_EFFECT_DAMAGE_SPAWN, GetHashId());
+        attacker.photonView.RPC("RpcEffect", RpcTarget.All, attacker.photonView.ViewID, CharacterEntity.RPC_EFFECT_DAMAGE_SPAWN, GetHashId(), actionId);
     }
 
     public void SetupAnimations()

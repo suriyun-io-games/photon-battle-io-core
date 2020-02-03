@@ -20,6 +20,8 @@ public class SkillData : ScriptableObject
     public Sprite icon;
     public AttackAnimation attackAnimation;
     public DamageEntity damagePrefab;
+    [Tooltip("This status will be applied to user when use skill")]
+    public StatusEffectEntity statusEffectPrefab;
     [Tooltip("This will increase to weapon damage to calculate skill damage" +
         "Ex. weaponDamage => 10 * this => 1, skill damage = 10 + 1 = 11")]
     public int increaseDamage;
@@ -65,6 +67,7 @@ public class SkillData : ScriptableObject
                 damageEntity.weaponDamage = Mathf.CeilToInt(damage);
                 damageEntity.hitEffectType = CharacterEntity.RPC_EFFECT_SKILL_HIT;
                 damageEntity.relateDataId = GetHashId();
+                damageEntity.actionId = 0;
             }
 
             gameNetworkManager.photonView.RPC("RpcCharacterUseSkill", 
@@ -81,6 +84,9 @@ public class SkillData : ScriptableObject
             addRotationY += addingRotationY;
         }
 
-        attacker.photonView.RPC("RpcEffect", RpcTarget.All, attacker.photonView.ViewID, CharacterEntity.RPC_EFFECT_SKILL_SPAWN, GetHashId());
+        attacker.photonView.RPC("RpcEffect", RpcTarget.All, attacker.photonView.ViewID, CharacterEntity.RPC_EFFECT_SKILL_SPAWN, GetHashId(), default(byte));
+
+        if (statusEffectPrefab)
+            attacker.photonView.RPC("RpcApplyStatusEffect", RpcTarget.All, statusEffectPrefab.GetHashId());
     }
 }

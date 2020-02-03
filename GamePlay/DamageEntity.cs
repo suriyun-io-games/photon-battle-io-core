@@ -6,9 +6,21 @@ using Photon.Pun;
 [RequireComponent(typeof(Rigidbody))]
 public class DamageEntity : MonoBehaviour
 {
+    public string GetId()
+    {
+        return name;
+    }
+
+    public int GetHashId()
+    {
+        return GetId().MakeHashId();
+    }
+
     public EffectEntity spawnEffectPrefab;
     public EffectEntity explodeEffectPrefab;
     public EffectEntity hitEffectPrefab;
+    [Tooltip("This status will be applied to character whom hitted by this damage entity")]
+    public StatusEffectEntity statusEffectPrefab;
     public AudioClip[] hitFx;
     public float radius;
     public float lifeTime;
@@ -23,6 +35,7 @@ public class DamageEntity : MonoBehaviour
     public int weaponDamage { get; set; }
     public byte hitEffectType { get; set; }
     public int relateDataId { get; set; }
+    public byte actionId { get; set; }
 
     private CharacterEntity attacker;
     public CharacterEntity Attacker
@@ -168,7 +181,9 @@ public class DamageEntity : MonoBehaviour
             var gameplayManager = GameplayManager.Singleton;
             float damage = Attacker.TotalAttack;
             damage += (Random.Range(gameplayManager.minAttackVaryRate, gameplayManager.maxAttackVaryRate) * damage);
-            target.ReceiveDamage(Attacker, Mathf.CeilToInt(damage), hitEffectType, relateDataId);
+            target.ReceiveDamage(Attacker, Mathf.CeilToInt(damage), hitEffectType, relateDataId, actionId);
+            if (statusEffectPrefab)
+                target.photonView.RPC("RpcApplyStatusEffect", RpcTarget.All, statusEffectPrefab.GetHashId());
         }
     }
 
@@ -187,7 +202,7 @@ public class DamageEntity : MonoBehaviour
 
     public static DamageEntity InstantiateNewEntityByWeapon(
         int weaponId,
-        int actionId,
+        byte actionId,
         Vector3 direction,
         int attackerViewId,
         float addRotationX,
@@ -197,7 +212,8 @@ public class DamageEntity : MonoBehaviour
         if (GameInstance.Weapons.TryGetValue(weaponId, out weaponData))
         {
             var damagePrefab = weaponData.damagePrefab;
-            if (weaponData.AttackAnimations[actionId].damagePrefab != null)
+            if (weaponData.AttackAnimations.ContainsKey(actionId) && 
+                weaponData.AttackAnimations[actionId].damagePrefab != null)
                 damagePrefab = weaponData.AttackAnimations[actionId].damagePrefab;
             if (damagePrefab)
                 return InstantiateNewEntity(damagePrefab, weaponData.AttackAnimations[actionId].isAnimationForLeftHandWeapon, direction, attackerViewId, addRotationX, addRotationY);

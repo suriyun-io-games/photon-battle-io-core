@@ -31,6 +31,7 @@ public class GameNetworkManager : BaseNetworkGameManager
             damageEntity.weaponDamage = damage;
             damageEntity.hitEffectType = CharacterEntity.RPC_EFFECT_DAMAGE_HIT;
             damageEntity.relateDataId = weaponId;
+            damageEntity.actionId = actionId;
         }
     }
 
@@ -53,6 +54,7 @@ public class GameNetworkManager : BaseNetworkGameManager
             damageEntity.weaponDamage = damage;
             damageEntity.hitEffectType = CharacterEntity.RPC_EFFECT_SKILL_HIT;
             damageEntity.relateDataId = skillId;
+            damageEntity.actionId = 0;
         }
     }
 

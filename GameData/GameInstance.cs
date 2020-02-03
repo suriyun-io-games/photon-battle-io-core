@@ -27,6 +27,7 @@ public class GameInstance : BaseNetworkGameInstance
     public static readonly Dictionary<int, WeaponData> Weapons = new Dictionary<int, WeaponData>();
     public static readonly Dictionary<int, CustomEquipmentData> CustomEquipments = new Dictionary<int, CustomEquipmentData>();
     public static readonly Dictionary<int, SkillData> Skills = new Dictionary<int, SkillData>();
+    public static readonly Dictionary<int, StatusEffectEntity> StatusEffects = new Dictionary<int, StatusEffectEntity>();
     protected override void Awake()
     {
         base.Awake();
@@ -45,42 +46,36 @@ public class GameInstance : BaseNetworkGameInstance
         base.Start();
 
         Skills.Clear();
+        StatusEffects.Clear();
         Heads.Clear();
         foreach (var head in heads)
         {
+            if (!head) continue;
             if (head.skills != null)
-            {
-                foreach (var skill in head.skills)
-                {
-                    Skills[skill.GetHashId()] = skill;
-                }
-            }
+                AddSkills(head.skills);
             Heads[head.GetHashId()] = head;
         }
 
         Characters.Clear();
         foreach (var character in characters)
         {
+            if (!character) continue;
             if (character.skills != null)
-            {
-                foreach (var skill in character.skills)
-                {
-                    Skills[skill.GetHashId()] = skill;
-                }
-            }
+                AddSkills(character.skills);
             Characters[character.GetHashId()] = character;
         }
 
         Weapons.Clear();
         foreach (var weapon in weapons)
         {
-            weapon.SetupAnimations();
+            if (!weapon) continue;
             if (weapon.skills != null)
+                AddSkills(weapon.skills);
+            weapon.SetupAnimations();
+            foreach (var attackAnimation in weapon.attackAnimations)
             {
-                foreach (var skill in weapon.skills)
-                {
-                    Skills[skill.GetHashId()] = skill;
-                }
+                if (attackAnimation.damagePrefab && attackAnimation.damagePrefab && attackAnimation.damagePrefab.statusEffectPrefab)
+                    AddStatusEffectEntities(new StatusEffectEntity[] { attackAnimation.damagePrefab.statusEffectPrefab });
             }
             Weapons[weapon.GetHashId()] = weapon;
         }
@@ -88,18 +83,40 @@ public class GameInstance : BaseNetworkGameInstance
         CustomEquipments.Clear();
         foreach (var customEquipment in customEquipments)
         {
+            if (!customEquipment) continue;
             if (customEquipment.skills != null)
-            {
-                foreach (var skill in customEquipment.skills)
-                {
-                    Skills[skill.GetHashId()] = skill;
-                }
-            }
+                AddSkills(customEquipment.skills);
             CustomEquipments[customEquipment.GetHashId()] = customEquipment;
         }
 
         UpdateAvailableItems();
         ValidatePlayerSave();
+    }
+
+    public void AddSkills(SkillData[] skills)
+    {
+        if (skills == null) return;
+        foreach (var skill in skills)
+        {
+            if (!skill) continue;
+            if (skill.statusEffectPrefab)
+                AddStatusEffectEntities(new StatusEffectEntity[] { skill.statusEffectPrefab });
+            if (skill.damagePrefab && skill.damagePrefab.statusEffectPrefab)
+                AddStatusEffectEntities(new StatusEffectEntity[] { skill.damagePrefab.statusEffectPrefab });
+            if (skill.attackAnimation.damagePrefab && skill.attackAnimation.damagePrefab && skill.attackAnimation.damagePrefab.statusEffectPrefab)
+                AddStatusEffectEntities(new StatusEffectEntity[] { skill.attackAnimation.damagePrefab.statusEffectPrefab });
+            Skills[skill.GetHashId()] = skill;
+        }
+    }
+
+    public void AddStatusEffectEntities(StatusEffectEntity[] statusEffectEntities)
+    {
+        if (statusEffectEntities == null) return;
+        foreach (var statusEffectEntity in statusEffectEntities)
+        {
+            if (!statusEffectEntity) continue;
+            StatusEffects[statusEffectEntity.GetHashId()] = statusEffectEntity;
+        }
     }
 
     public void ValidatePlayerSave()

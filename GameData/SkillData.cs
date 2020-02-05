@@ -37,7 +37,15 @@ public class SkillData : ScriptableObject
     {
         if (attacker == null || !attacker.photonView.IsMine)
             return;
-        
+
+        attacker.photonView.RPC("RpcEffect", RpcTarget.All, attacker.photonView.ViewID, CharacterEntity.RPC_EFFECT_SKILL_SPAWN, GetHashId(), default(byte));
+
+        if (statusEffectPrefab)
+            attacker.photonView.RPC("RpcApplyStatusEffect", RpcTarget.All, statusEffectPrefab.GetHashId());
+
+        if (!damagePrefab)
+            return;
+
         var gameNetworkManager = GameNetworkManager.Singleton;
         var gameplayManager = GameplayManager.Singleton;
         var spread = 1 + spreadDamages;
@@ -83,10 +91,5 @@ public class SkillData : ScriptableObject
 
             addRotationY += addingRotationY;
         }
-
-        attacker.photonView.RPC("RpcEffect", RpcTarget.All, attacker.photonView.ViewID, CharacterEntity.RPC_EFFECT_SKILL_SPAWN, GetHashId(), default(byte));
-
-        if (statusEffectPrefab)
-            attacker.photonView.RPC("RpcApplyStatusEffect", RpcTarget.All, statusEffectPrefab.GetHashId());
     }
 }

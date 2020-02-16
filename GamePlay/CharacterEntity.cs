@@ -1215,7 +1215,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
     public void CmdDash()
     {
         // Play dash animation on other clients
-        photonView.RPC("RpcDash", RpcTarget.Others, name);
+        photonView.RPC("RpcDash", RpcTarget.Others);
     }
 
     [PunRPC]

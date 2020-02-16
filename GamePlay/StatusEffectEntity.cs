@@ -31,9 +31,7 @@ public class StatusEffectEntity : MonoBehaviour
     private void OnDestroy()
     {
         if (characterEntity)
-        {
             characterEntity.RemoveAppliedStatusEffect(GetHashId());
-        }
     }
 
     private void OnValidate()

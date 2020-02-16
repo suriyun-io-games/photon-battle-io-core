@@ -40,17 +40,15 @@ public class SkillData : ScriptableObject
 
         attacker.photonView.RPC("RpcEffect", RpcTarget.All, attacker.photonView.ViewID, CharacterEntity.RPC_EFFECT_SKILL_SPAWN, GetHashId(), default(byte));
 
-        if (statusEffectPrefab)
+        if (statusEffectPrefab && GameplayManager.Singleton.CanApplyStatusEffect(attacker, null))
             attacker.photonView.RPC("RpcApplyStatusEffect", RpcTarget.All, statusEffectPrefab.GetHashId());
 
         if (!damagePrefab)
             return;
-
-        var gameNetworkManager = GameNetworkManager.Singleton;
-        var gameplayManager = GameplayManager.Singleton;
+        
         var spread = 1 + spreadDamages;
         var damage = (float)attacker.TotalAttack + increaseDamage + (attacker.TotalAttack * increaseDamageByRate);
-        damage += Random.Range(gameplayManager.minAttackVaryRate, gameplayManager.maxAttackVaryRate) * damage;
+        damage += Random.Range(GameplayManager.Singleton.minAttackVaryRate, GameplayManager.Singleton.maxAttackVaryRate) * damage;
 
         var addRotationX = 0f;
         var addRotationY = 0f;
@@ -78,7 +76,7 @@ public class SkillData : ScriptableObject
                 damageEntity.actionId = 0;
             }
 
-            gameNetworkManager.photonView.RPC("RpcCharacterUseSkill", 
+            GameNetworkManager.Singleton.photonView.RPC("RpcCharacterUseSkill", 
                 RpcTarget.Others,
                 GetHashId(),
                 (short)(direction.x * 100f),

@@ -177,12 +177,10 @@ public class DamageEntity : MonoBehaviour
     private void ApplyDamage(CharacterEntity target)
     {
         // Damage receiving calculation on server only
-        if (PhotonNetwork.IsMasterClient)
+        if (PhotonNetwork.IsMasterClient && Attacker)
         {
             var gameplayManager = GameplayManager.Singleton;
-            float damage = Attacker.TotalAttack;
-            damage += (Random.Range(gameplayManager.minAttackVaryRate, gameplayManager.maxAttackVaryRate) * damage);
-            target.ReceiveDamage(Attacker, Mathf.CeilToInt(damage), hitEffectType, relateDataId, actionId);
+            target.ReceiveDamage(Attacker, weaponDamage, hitEffectType, relateDataId, actionId);
             if (statusEffectPrefab)
                 target.photonView.RPC("RpcApplyStatusEffect", RpcTarget.All, statusEffectPrefab.GetHashId());
         }

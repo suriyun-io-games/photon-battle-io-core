@@ -49,8 +49,10 @@ public class StatusEffectEntity : MonoBehaviour
 
     public void Recovery()
     {
-        if (characterEntity)
+        if (characterEntity && GameplayManager.Singleton.CanReceiveDamage(characterEntity, null))
+        {
             characterEntity.Hp += recoveryHpPerSeconds;
+        }
     }
 
     public void Applied(CharacterEntity characterEntity)

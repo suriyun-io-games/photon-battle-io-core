@@ -1352,21 +1352,21 @@ public class CharacterEntity : BaseNetworkGameCharacter
     protected void UpdateSkills()
     {
         skills.Clear();
-        if (characterData != null)
+        if (characterData != null && characterData.skills != null)
         {
             foreach (var skill in characterData.skills)
             {
                 skills[skill.hotkeyId] = skill;
             }
         }
-        if (headData != null)
+        if (headData != null && headData.skills != null)
         {
             foreach (var skill in headData.skills)
             {
                 skills[skill.hotkeyId] = skill;
             }
         }
-        if (weaponData != null)
+        if (weaponData != null && weaponData.skills != null)
         {
             foreach (var skill in weaponData.skills)
             {

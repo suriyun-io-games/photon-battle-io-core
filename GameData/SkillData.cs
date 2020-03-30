@@ -32,6 +32,7 @@ public class SkillData : ScriptableObject
     public float coolDown = 3;
     [Header("SFX")]
     public AudioClip[] attackFx;
+    public int TotalSpreadDamages { get { return 1 + spreadDamages; } }
 
     public void Launch(CharacterEntity attacker)
     {
@@ -45,8 +46,8 @@ public class SkillData : ScriptableObject
 
         if (!damagePrefab)
             return;
-        
-        var spread = 1 + spreadDamages;
+
+        var spread = TotalSpreadDamages;
         var damage = (float)attacker.TotalAttack + increaseDamage + (attacker.TotalAttack * increaseDamageByRate);
         damage += Random.Range(GameplayManager.Singleton.minAttackVaryRate, GameplayManager.Singleton.maxAttackVaryRate) * damage;
 

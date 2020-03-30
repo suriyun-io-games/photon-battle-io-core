@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Photon.Realtime;
 using UnityEngine;
 using Photon.Pun;
+using ExitGames.Client.Photon;
 
 public class GameNetworkManager : BaseNetworkGameManager
 {
@@ -92,6 +93,12 @@ public class GameNetworkManager : BaseNetworkGameManager
             weaponData != null ? weaponData.GetHashId() : 0,
             selectCustomEquipments.ToArray(),
             "");
+    }
+
+    protected override void Awake()
+    {
+        base.Awake();
+        PhotonPeer.RegisterType(typeof(CharacterStats), 0, CharacterStats.SerializeMethod, CharacterStats.DeserializeMethod);
     }
 
     protected override void UpdateScores(NetworkGameScore[] scores)

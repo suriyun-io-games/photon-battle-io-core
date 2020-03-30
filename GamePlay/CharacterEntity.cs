@@ -254,7 +254,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
             if (PhotonNetwork.IsMasterClient)
             {
                 _addStats = value;
-                photonView.RPC("RpcUpdateAddStats", RpcTarget.Others, JsonUtility.ToJson(value));
+                photonView.RPC("RpcUpdateAddStats", RpcTarget.Others, value);
             }
         }
     }
@@ -321,7 +321,8 @@ public class CharacterEntity : BaseNetworkGameCharacter
     public bool isGround { get; private set; }
     public bool isPlayingAttackAnim { get; private set; }
     public bool isPlayingUseSkillAnim { get; private set; }
-    public DamageEntity usingDamageEntity { get; private set; }
+    public DamageEntity attackingDamageEntity { get; private set; }
+    public int attackingSpreadDamages { get; private set; }
     public float deathTime { get; private set; }
     public float invincibleTime { get; private set; }
 
@@ -461,6 +462,24 @@ public class CharacterEntity : BaseNetworkGameCharacter
         }
     }
 
+    public virtual float TotalIncreaseDamageRate
+    {
+        get
+        {
+            var total = SumAddStats.increaseDamageRate;
+            return total;
+        }
+    }
+
+    public virtual float TotalReduceReceiveDamageRate
+    {
+        get
+        {
+            var total = SumAddStats.reduceReceiveDamageRate;
+            return total;
+        }
+    }
+
     public virtual int RewardExp
     {
         get { return GameplayManager.Singleton.GetRewardExp(level); }
@@ -527,7 +546,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
         photonView.RPC("RpcUpdateIsInvincible", RpcTarget.Others, isInvincible);
         photonView.RPC("RpcUpdateAttackingActionId", RpcTarget.Others, attackingActionId);
         photonView.RPC("RpcUpdateUsingSkillHotkeyId", RpcTarget.Others, usingSkillHotkeyId);
-        photonView.RPC("RpcUpdateAddStats", RpcTarget.Others, JsonUtility.ToJson(addStats));
+        photonView.RPC("RpcUpdateAddStats", RpcTarget.Others, addStats);
         photonView.RPC("RpcUpdateExtra", RpcTarget.Others, extra);
     }
 
@@ -548,7 +567,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
         photonView.RPC("RpcUpdateIsInvincible", newPlayer, isInvincible);
         photonView.RPC("RpcUpdateAttackingActionId", newPlayer, attackingActionId);
         photonView.RPC("RpcUpdateUsingSkillHotkeyId", newPlayer, usingSkillHotkeyId);
-        photonView.RPC("RpcUpdateAddStats", newPlayer, JsonUtility.ToJson(addStats));
+        photonView.RPC("RpcUpdateAddStats", newPlayer, addStats);
         photonView.RPC("RpcUpdateExtra", newPlayer, extra);
     }
 
@@ -933,7 +952,8 @@ public class CharacterEntity : BaseNetworkGameCharacter
             if (weaponData != null && attackingActionId >= 0 && attackingActionId < 255 &&
                 weaponData.AttackAnimations.TryGetValue(attackingActionId, out attackAnimation))
             {
-                usingDamageEntity = weaponData.damagePrefab;
+                attackingDamageEntity = weaponData.damagePrefab;
+                attackingSpreadDamages = TotalSpreadDamages;
                 byte actionId = (byte)attackingActionId;
                 yield return StartCoroutine(PlayAttackAnimationRoutine(attackAnimation, weaponData.attackFx, () =>
                 {
@@ -944,7 +964,8 @@ public class CharacterEntity : BaseNetworkGameCharacter
                 // If player still attacking, random new attacking action id
                 if (PhotonNetwork.IsMasterClient && attackingActionId >= 0 && weaponData != null)
                     attackingActionId = weaponData.GetRandomAttackAnimation().actionId;
-                usingDamageEntity = null;
+                attackingDamageEntity = null;
+                attackingSpreadDamages = 0;
             }
             isPlayingAttackAnim = false;
         }
@@ -961,14 +982,16 @@ public class CharacterEntity : BaseNetworkGameCharacter
             SkillData skillData;
             if (skills.TryGetValue((sbyte)usingSkillHotkeyId, out skillData))
             {
-                usingDamageEntity = skillData.damagePrefab;
+                attackingDamageEntity = skillData.damagePrefab;
+                attackingSpreadDamages = skillData.TotalSpreadDamages;
                 yield return StartCoroutine(PlayAttackAnimationRoutine(skillData.attackAnimation, skillData.attackFx, () =>
                 {
                     // Launch damage entity on owning client then update on other clients
                     if (photonView.IsMine)
                         skillData.Launch(this);
                 }));
-                usingDamageEntity = null;
+                attackingDamageEntity = null;
+                attackingSpreadDamages = 0;
             }
             usingSkillHotkeyId = -1;
             isPlayingUseSkillAnim = false;
@@ -1018,7 +1041,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
             return false;
 
         photonView.RPC("RpcEffect", RpcTarget.All, attacker.photonView.ViewID, type, dataId, actionId);
-        int reduceHp = damage - TotalDefend;
+        int reduceHp = (int)(damage + ((float)damage * TotalIncreaseDamageRate) - ((float)damage * TotalReduceReceiveDamageRate)) - TotalDefend;
         if (reduceHp < 0)
             reduceHp = 0;
 
@@ -1511,9 +1534,9 @@ public class CharacterEntity : BaseNetworkGameCharacter
         _usingSkillHotkeyId = usingSkillHotkeyId;
     }
     [PunRPC]
-    protected virtual void RpcUpdateAddStats(string json)
+    protected virtual void RpcUpdateAddStats(CharacterStats addStats)
     {
-        _addStats = JsonUtility.FromJson<CharacterStats>(json);
+        _addStats = addStats;
     }
     [PunRPC]
     protected virtual void RpcUpdateExtra(string extra)

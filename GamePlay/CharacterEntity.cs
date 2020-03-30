@@ -321,6 +321,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
     public bool isGround { get; private set; }
     public bool isPlayingAttackAnim { get; private set; }
     public bool isPlayingUseSkillAnim { get; private set; }
+    public DamageEntity usingDamageEntity { get; private set; }
     public float deathTime { get; private set; }
     public float invincibleTime { get; private set; }
 
@@ -609,11 +610,11 @@ public class CharacterEntity : BaseNetworkGameCharacter
             isDashing = false;
         // Update attack signal
         if (attackSignalObject != null)
-            attackSignalObject.SetActive(isPlayingAttackAnim);
+            attackSignalObject.SetActive(isPlayingAttackAnim || isPlayingUseSkillAnim);
         if (attackSignalObjectForTeamA != null)
-            attackSignalObjectForTeamA.SetActive(isPlayingAttackAnim && playerTeam == PunTeams.Team.red);
+            attackSignalObjectForTeamA.SetActive((isPlayingAttackAnim || isPlayingUseSkillAnim) && playerTeam == PunTeams.Team.red);
         if (attackSignalObjectForTeamB != null)
-            attackSignalObjectForTeamB.SetActive(isPlayingAttackAnim && playerTeam == PunTeams.Team.blue);
+            attackSignalObjectForTeamB.SetActive((isPlayingAttackAnim || isPlayingUseSkillAnim) && playerTeam == PunTeams.Team.blue);
     }
 
     private void FixedUpdate()
@@ -932,6 +933,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
             if (weaponData != null && attackingActionId >= 0 && attackingActionId < 255 &&
                 weaponData.AttackAnimations.TryGetValue(attackingActionId, out attackAnimation))
             {
+                usingDamageEntity = weaponData.damagePrefab;
                 byte actionId = (byte)attackingActionId;
                 yield return StartCoroutine(PlayAttackAnimationRoutine(attackAnimation, weaponData.attackFx, () =>
                 {
@@ -942,6 +944,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
                 // If player still attacking, random new attacking action id
                 if (PhotonNetwork.IsMasterClient && attackingActionId >= 0 && weaponData != null)
                     attackingActionId = weaponData.GetRandomAttackAnimation().actionId;
+                usingDamageEntity = null;
             }
             isPlayingAttackAnim = false;
         }
@@ -958,12 +961,14 @@ public class CharacterEntity : BaseNetworkGameCharacter
             SkillData skillData;
             if (skills.TryGetValue((sbyte)usingSkillHotkeyId, out skillData))
             {
+                usingDamageEntity = skillData.damagePrefab;
                 yield return StartCoroutine(PlayAttackAnimationRoutine(skillData.attackAnimation, skillData.attackFx, () =>
                 {
                     // Launch damage entity on owning client then update on other clients
                     if (photonView.IsMine)
                         skillData.Launch(this);
                 }));
+                usingDamageEntity = null;
             }
             usingSkillHotkeyId = -1;
             isPlayingUseSkillAnim = false;
@@ -1042,7 +1047,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
         }
         return true;
     }
-    
+
     public void KilledTarget(CharacterEntity target)
     {
         if (!PhotonNetwork.IsMasterClient)
@@ -1062,7 +1067,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
         ++killCount;
         GameNetworkManager.Singleton.SendKillNotify(playerName, target.playerName, weaponData == null ? string.Empty : weaponData.GetId());
     }
-    
+
     public void Heal(int amount)
     {
         if (!PhotonNetwork.IsMasterClient)
@@ -1087,7 +1092,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
             return;
         selectWeapon = weaponData.GetHashId();
     }
-    
+
     public void UpdateCharacterModelHiddingState()
     {
         if (characterModel == null)
@@ -1103,7 +1108,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
     }
 
     public virtual void OnSpawn() { }
-    
+
     public void ServerInvincible()
     {
         if (!PhotonNetwork.IsMasterClient)
@@ -1111,7 +1116,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
         invincibleTime = Time.unscaledTime;
         isInvincible = true;
     }
-    
+
     public void ServerSpawn(bool isWatchedAds)
     {
         if (!PhotonNetwork.IsMasterClient)
@@ -1127,7 +1132,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
             ServerRevive();
         }
     }
-    
+
     public void ServerRespawn(bool isWatchedAds)
     {
         if (!PhotonNetwork.IsMasterClient)
@@ -1135,7 +1140,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
         if (CanRespawn(isWatchedAds))
             ServerSpawn(isWatchedAds);
     }
-    
+
     public void ServerRevive()
     {
         if (!PhotonNetwork.IsMasterClient)
@@ -1180,7 +1185,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
         }
         Hp = TotalHp;
     }
-    
+
     public void CmdReady()
     {
         photonView.RPC("RpcServerReady", RpcTarget.MasterClient);
@@ -1195,7 +1200,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
             isReady = true;
         }
     }
-    
+
     public void CmdRespawn(bool isWatchedAds)
     {
         photonView.RPC("RpcServerRespawn", RpcTarget.MasterClient, isWatchedAds);
@@ -1206,12 +1211,12 @@ public class CharacterEntity : BaseNetworkGameCharacter
     {
         ServerRespawn(isWatchedAds);
     }
-    
+
     public void CmdAddAttribute(string name)
     {
         photonView.RPC("RpcServerAddAttribute", RpcTarget.MasterClient, name);
     }
-    
+
     public void CmdDash()
     {
         // Play dash animation on other clients
@@ -1279,7 +1284,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
                 if (GameInstance.Weapons.TryGetValue(dataId, out weaponData))
                 {
                     var damagePrefab = weaponData.damagePrefab;
-                    if (weaponData.AttackAnimations.ContainsKey(actionId) && 
+                    if (weaponData.AttackAnimations.ContainsKey(actionId) &&
                         weaponData.AttackAnimations[actionId].damagePrefab != null)
                         damagePrefab = weaponData.AttackAnimations[actionId].damagePrefab;
                     if (damagePrefab)

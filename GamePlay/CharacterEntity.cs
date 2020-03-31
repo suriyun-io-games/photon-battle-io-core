@@ -467,6 +467,8 @@ public class CharacterEntity : BaseNetworkGameCharacter
         get
         {
             var total = SumAddStats.increaseDamageRate;
+            if (total < -1f)
+                total = -0.9f;
             return total;
         }
     }

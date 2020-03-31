@@ -26,6 +26,7 @@ public class WeaponData : ItemData
         var spread = attacker.TotalSpreadDamages;
         var damage = (float)attacker.TotalAttack;
         damage += Random.Range(gameplayManager.minAttackVaryRate, gameplayManager.maxAttackVaryRate) * damage;
+        damage /= spread;
 
         var addRotationX = 0f;
         var addRotationY = 0f;

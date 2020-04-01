@@ -699,26 +699,26 @@ public class CharacterEntity : BaseNetworkGameCharacter
                     inputDirection = new Vector2(InputManager.GetAxis("Mouse X", false), InputManager.GetAxis("Mouse Y", false));
                     if (canAttack)
                     {
-                        inputAttack = inputDirection.magnitude != 0;
+                        inputAttack = inputDirection.sqrMagnitude != 0;
                         if (!inputAttack)
                         {
                             // Find out that player pressed on skill hotkey or not
                             for (sbyte i = 0; i < 8; ++i)
                             {
                                 inputDirection = new Vector2(InputManager.GetAxis("Skill X " + i, false), InputManager.GetAxis("Skill Y " + i, false));
-                                if (inputDirection.magnitude != 0 && holdingUseSkillHotkeyId < 0)
+                                if (inputDirection.sqrMagnitude != 0 && holdingUseSkillHotkeyId < 0)
                                 {
                                     // Start drag
                                     holdingUseSkillHotkeyId = i;
                                     releasedUseSkillHotkeyId = -1;
                                     break;
                                 }
-                                if (inputDirection.magnitude != 0 && holdingUseSkillHotkeyId == i)
+                                if (inputDirection.sqrMagnitude != 0 && holdingUseSkillHotkeyId == i)
                                 {
                                     // Holding
                                     break;
                                 }
-                                if (inputDirection.magnitude == 0 && holdingUseSkillHotkeyId == i)
+                                if (inputDirection.sqrMagnitude == 0 && holdingUseSkillHotkeyId == i)
                                 {
                                     // End drag
                                     holdingUseSkillHotkeyId = -1;
@@ -818,21 +818,18 @@ public class CharacterEntity : BaseNetworkGameCharacter
 
     protected virtual void Move(Vector3 direction)
     {
-        if (direction.magnitude > 0)
+        if (direction.sqrMagnitude > 0)
         {
-            if (direction.magnitude > 1)
-                direction = direction.normalized;
+            direction = direction.normalized;
 
             var targetSpeed = GetMoveSpeed() * (isDashing ? dashMoveSpeedMultiplier : 1f);
             var targetVelocity = direction * targetSpeed;
 
             // Apply a force that attempts to reach our target velocity
             Vector3 velocity = CacheRigidbody.velocity;
-            Vector3 velocityChange = (targetVelocity - velocity);
-            velocityChange.x = Mathf.Clamp(velocityChange.x, -targetSpeed, targetSpeed);
-            velocityChange.y = 0;
-            velocityChange.z = Mathf.Clamp(velocityChange.z, -targetSpeed, targetSpeed);
-            CacheRigidbody.AddForce(velocityChange, ForceMode.VelocityChange);
+            velocity.x = targetVelocity.x;
+            velocity.z = targetVelocity.z;
+            CacheRigidbody.velocity = velocity;
         }
     }
 
@@ -846,7 +843,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
 
         Move(isDashing ? dashDirection : moveDirection);
         // Turn character to move direction
-        if (inputDirection.magnitude <= 0 && inputMove.magnitude > 0)
+        if (inputDirection.sqrMagnitude <= 0 && inputMove.sqrMagnitude > 0)
             inputDirection = inputMove;
         Rotate(isDashing ? dashInputMove : inputDirection);
 
@@ -892,7 +889,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
 
     protected void Rotate(Vector2 direction)
     {
-        if (direction.magnitude != 0)
+        if (direction.sqrMagnitude != 0)
         {
             int newRotation = (int)(Quaternion.LookRotation(new Vector3(direction.x, 0, direction.y)).eulerAngles.y + targetCamera.transform.eulerAngles.y);
             Quaternion targetRotation = Quaternion.Euler(0, newRotation, 0);

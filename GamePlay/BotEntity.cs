@@ -4,7 +4,6 @@ using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Serialization;
 using Photon.Pun;
-using Photon.Pun.UtilityScripts;
 using Photon.Realtime;
 using System.Linq;
 
@@ -28,8 +27,8 @@ public class BotEntity : CharacterEntity
             }
         }
     }
-    protected PunTeams.Team botPlayerTeam;
-    public override PunTeams.Team playerTeam
+    protected byte botPlayerTeam;
+    public override byte playerTeam
     {
         get { return botPlayerTeam; }
         set
@@ -382,7 +381,7 @@ public class BotEntity : CharacterEntity
     }
 
     [PunRPC]
-    protected void RpcUpdateBotTeam(PunTeams.Team team)
+    protected void RpcUpdateBotTeam(byte team)
     {
         botPlayerTeam = team;
     }

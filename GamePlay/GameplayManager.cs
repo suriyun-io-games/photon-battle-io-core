@@ -108,12 +108,14 @@ public class GameplayManager : MonoBehaviourPunCallbacks
 
     public Vector3 GetCharacterSpawnPosition(CharacterEntity character)
     {
-        if (character.playerTeam == PunTeams.Team.red && 
+        // TODO: Improve team codes
+
+        if (character.playerTeam == 1 && 
             characterSpawnAreasForTeamA != null &&
             characterSpawnAreasForTeamA.Length > 0)
             return characterSpawnAreasForTeamA[Random.Range(0, characterSpawnAreasForTeamA.Length)].GetSpawnPosition();
 
-        if (character.playerTeam == PunTeams.Team.blue &&
+        if (character.playerTeam == 2 &&
             characterSpawnAreasForTeamB != null &&
             characterSpawnAreasForTeamB.Length > 0)
             return characterSpawnAreasForTeamB[Random.Range(0, characterSpawnAreasForTeamB.Length)].GetSpawnPosition();

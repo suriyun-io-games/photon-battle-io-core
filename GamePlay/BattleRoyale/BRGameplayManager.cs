@@ -105,12 +105,12 @@ public class BRGameplayManager : GameplayManager
     }
     public float currentDuration
     {
-        get { try { return (float)PhotonNetwork.CurrentRoom.CustomProperties[CUSTOM_ROOM_CURRENT_DURATION]; } catch { } return 0f; }
+        get { try { return (float)PhotonNetwork.CurrentRoom.CustomProperties[CUSTOM_ROOM_CURRENT_DURATION]; } catch { } return waitForPlayersDuration; }
         set { if (PhotonNetwork.IsMasterClient && value != currentDuration) PhotonNetwork.CurrentRoom.SetCustomProperties(new Hashtable() { { CUSTOM_ROOM_CURRENT_DURATION, value } }); }
     }
     public float currentCountdown
     {
-        get { try { return (float)PhotonNetwork.CurrentRoom.CustomProperties[CUSTOM_ROOM_CURRENT_COUNTDOWN]; } catch { } return 0f; }
+        get { try { return (float)PhotonNetwork.CurrentRoom.CustomProperties[CUSTOM_ROOM_CURRENT_COUNTDOWN]; } catch { } return waitForPlayersDuration; }
         set
         {
             if (PhotonNetwork.IsMasterClient && value != currentCountdown)
@@ -455,12 +455,12 @@ public class BRGameplayManager : GameplayManager
     [PunRPC]
     protected void RpcOnCurrentCountdownChanged(float currentCountdown)
     {
-        CurrentCountdown = this.currentCountdown = currentCountdown;
+        CurrentCountdown = currentCountdown;
     }
 
     [PunRPC]
     protected void RpcOnSpawnerMoveCountdownChanged(float spawnerMoveCountdown)
     {
-        SpawnerMoveCountdown = this.spawnerMoveCountdown = spawnerMoveCountdown;
+        SpawnerMoveCountdown = spawnerMoveCountdown;
     }
 }

@@ -1265,19 +1265,24 @@ public class CharacterEntity : BaseNetworkGameCharacter
     }
 
     [PunRPC]
-    protected void RpcApplyStatusEffect(int dataId)
+    protected void RpcApplyStatusEffect(int dataId, int applierId)
     {
         // Destroy applied status effect, because it cannot be stacked
         RemoveAppliedStatusEffect(dataId);
         StatusEffectEntity statusEffect;
         if (GameInstance.StatusEffects.TryGetValue(dataId, out statusEffect) && Random.value <= statusEffect.applyRate)
         {
+            // Find applier
+            CharacterEntity applier = null;
+            PhotonView applierView = PhotonView.Find(applierId);
+            if (applierView != null)
+                applier = applierView.GetComponent<CharacterEntity>();
             // Found prefab, instantiates to character
             statusEffect = Instantiate(statusEffect, transform.position, transform.rotation, transform);
             // Just in case the game object might be not activated by default
             statusEffect.gameObject.SetActive(true);
             // Set applying character
-            statusEffect.Applied(this);
+            statusEffect.Applied(this, applier);
             // Add to applied status effects
             appliedStatusEffects[dataId] = statusEffect;
         }

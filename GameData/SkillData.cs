@@ -42,7 +42,7 @@ public class SkillData : ScriptableObject
         attacker.photonView.RPC("RpcEffect", RpcTarget.All, attacker.photonView.ViewID, CharacterEntity.RPC_EFFECT_SKILL_SPAWN, GetHashId(), default(byte));
 
         if (statusEffectPrefab && GameplayManager.Singleton.CanApplyStatusEffect(attacker, null))
-            attacker.photonView.RPC("RpcApplyStatusEffect", RpcTarget.All, statusEffectPrefab.GetHashId());
+            attacker.photonView.RPC("RpcApplyStatusEffect", RpcTarget.All, statusEffectPrefab.GetHashId(), attacker.photonView.ViewID);
 
         if (!damagePrefab)
             return;

@@ -20,7 +20,8 @@ public class StatusEffectEntity : MonoBehaviour
     public int recoveryHpPerSeconds = 0;
     public CharacterStats addStats;
     public float lifeTime;
-    private CharacterEntity characterEntity;
+    private CharacterEntity receiverCharacterEntity;
+    private CharacterEntity applierCharacterEntity;
 
     private void Start()
     {
@@ -30,8 +31,8 @@ public class StatusEffectEntity : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (characterEntity)
-            characterEntity.RemoveAppliedStatusEffect(GetHashId());
+        if (receiverCharacterEntity)
+            receiverCharacterEntity.RemoveAppliedStatusEffect(GetHashId());
     }
 
     private void OnValidate()
@@ -47,15 +48,18 @@ public class StatusEffectEntity : MonoBehaviour
 
     public void Recovery()
     {
-        if (characterEntity && GameplayManager.Singleton.CanReceiveDamage(characterEntity, null))
+        if (receiverCharacterEntity && GameplayManager.Singleton.CanReceiveDamage(receiverCharacterEntity, applierCharacterEntity))
         {
-            characterEntity.Hp += recoveryHpPerSeconds;
+            receiverCharacterEntity.Hp += recoveryHpPerSeconds;
+            if (applierCharacterEntity && receiverCharacterEntity.Hp == 0)
+                applierCharacterEntity.KilledTarget(receiverCharacterEntity);
         }
     }
 
-    public void Applied(CharacterEntity characterEntity)
+    public void Applied(CharacterEntity receiverCharacterEntity, CharacterEntity applierCharacterEntity)
     {
-        this.characterEntity = characterEntity;
+        this.receiverCharacterEntity = receiverCharacterEntity;
+        this.applierCharacterEntity = applierCharacterEntity;
         InvokeRepeating("Recovery", 0, 1);
     }
 }

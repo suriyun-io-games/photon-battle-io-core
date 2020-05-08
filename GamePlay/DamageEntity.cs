@@ -181,7 +181,7 @@ public class DamageEntity : MonoBehaviour
         {
             target.ReceiveDamage(Attacker, weaponDamage, hitEffectType, relateDataId, actionId);
             if (statusEffectPrefab && GameplayManager.Singleton.CanApplyStatusEffect(target, Attacker))
-                target.photonView.RPC("RpcApplyStatusEffect", RpcTarget.All, statusEffectPrefab.GetHashId());
+                target.photonView.RPC("RpcApplyStatusEffect", RpcTarget.All, statusEffectPrefab.GetHashId(), Attacker.photonView.ViewID);
         }
     }
 

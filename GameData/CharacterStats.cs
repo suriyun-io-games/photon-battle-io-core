@@ -1,8 +1,4 @@
 ﻿using ExitGames.Client.Photon;
-using System.Collections;
-using System.Collections.Generic;
-using System.Globalization;
-using UnityEngine;
 
 [System.Serializable]
 public struct CharacterStats

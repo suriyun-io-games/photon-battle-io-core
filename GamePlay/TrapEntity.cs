@@ -109,6 +109,9 @@ public class TrapEntity : MonoBehaviourPunCallbacks
         if (character == null)
             return;
 
+        if (character.Hp == 0)
+            return;
+
         var characterViewId = character.photonView.ViewID;
         var time = Time.unscaledTime;
         if (TriggerredTime.ContainsKey(characterViewId) && time - TriggerredTime[characterViewId] < triggerableDuration)

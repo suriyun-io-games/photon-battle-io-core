@@ -54,7 +54,7 @@ public class MonsterEntity : CharacterEntity
     [Range(0, 100)]
     public int monsterTypeId;
 
-    private Queue<Vector3> navPaths;
+    private Queue<Vector3> navPaths = new Queue<Vector3>();
     private Vector3 targetPosition;
     private float lastUpdateMovementTime;
     private float lastAttackTime;
@@ -324,21 +324,19 @@ public class MonsterEntity : CharacterEntity
         }
         NavMeshPath navPath = new NavMeshPath();
         NavMeshHit navHit;
-        if (NavMesh.SamplePosition(position, out navHit, 5f, areaMask) &&
+        if (NavMesh.SamplePosition(position, out navHit, 1000f, areaMask) &&
             NavMesh.CalculatePath(CacheTransform.position, navHit.position, areaMask, navPath))
         {
             navPaths = new Queue<Vector3>(navPath.corners);
             // Dequeue first path it's not require for future movement
             navPaths.Dequeue();
-        }
-        // Initial queue
-        if (navPaths == null)
-            navPaths = new Queue<Vector3>();
-        // Set first target position immediately
-        if (navPaths.Count > 0)
+            // Set movement
             targetPosition = navPaths.Dequeue();
+        }
         else
+        {
             targetPosition = position;
+        }
     }
 
     private bool RandomUseSkill(out sbyte hotkeyId)

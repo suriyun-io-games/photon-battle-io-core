@@ -219,11 +219,16 @@ public class DamageEntity : MonoBehaviour
         if (GameInstance.Weapons.TryGetValue(weaponId, out weaponData))
         {
             var damagePrefab = weaponData.damagePrefab;
-            if (weaponData.AttackAnimations.ContainsKey(actionId) && 
-                weaponData.AttackAnimations[actionId].damagePrefab != null)
-                damagePrefab = weaponData.AttackAnimations[actionId].damagePrefab;
+            var isAnimationForLeftHandWeapon = false;
+            AttackAnimation attackAnimation;
+            if (weaponData.AttackAnimations.TryGetValue(actionId, out attackAnimation))
+            {
+                if (attackAnimation.damagePrefab != null)
+                    damagePrefab = attackAnimation.damagePrefab;
+                isAnimationForLeftHandWeapon = attackAnimation.isAnimationForLeftHandWeapon;
+            }
             if (damagePrefab)
-                return InstantiateNewEntity(damagePrefab, weaponData.AttackAnimations[actionId].isAnimationForLeftHandWeapon, direction, attackerViewId, addRotationX, addRotationY);
+                return InstantiateNewEntity(damagePrefab, isAnimationForLeftHandWeapon, direction, attackerViewId, addRotationX, addRotationY);
             else
                 Debug.LogWarning("Can't find weapon damage entity prefab: " + weaponId);
         }

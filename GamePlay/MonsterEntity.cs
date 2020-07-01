@@ -167,7 +167,7 @@ public class MonsterEntity : CharacterEntity
     {
         // Override base function to changes functionality, to do nothing
     }
-    
+
     protected override void UpdateInput()
     {
         // Override base function to changes functionality, to do nothing
@@ -245,7 +245,7 @@ public class MonsterEntity : CharacterEntity
             }
         }
 
-        var rotatePosition = targetPosition;
+        var lookingPosition = targetPosition;
         if (enemy == null || enemy.IsDead || Time.unscaledTime - lastAttackTime >= forgetEnemyDuration)
         {
             enemy = null;
@@ -263,7 +263,7 @@ public class MonsterEntity : CharacterEntity
         else
         {
             // Set target rotation to enemy position
-            rotatePosition = enemy.CacheTransform.position;
+            lookingPosition = enemy.CacheTransform.position;
         }
 
         attackingActionId = -1;
@@ -303,11 +303,24 @@ public class MonsterEntity : CharacterEntity
                 targetPosition = navPaths.Dequeue();
         }
         // Rotate to target
-        var rotateHeading = rotatePosition - CacheTransform.position;
+        var rotateHeading = lookingPosition - CacheTransform.position;
         var targetRotation = Quaternion.LookRotation(rotateHeading);
         CacheTransform.rotation = Quaternion.Lerp(CacheTransform.rotation, Quaternion.Euler(0, targetRotation.eulerAngles.y, 0), Time.deltaTime * turnSpeed);
     }
 
+    void OnDrawGizmos()
+    {
+        if (path != null && path.corners != null && path.corners.Length > 0)
+        {
+            for (int i = path.corners.Length - 1; i >= 1; --i)
+            {
+                Gizmos.color = Color.green;
+                Gizmos.DrawLine(path.corners[i], path.corners[i - 1]);
+            }
+        }
+    }
+
+    NavMeshPath path;
     private void GetMovePaths(Vector3 position)
     {
         int areaMask = 0;
@@ -327,11 +340,13 @@ public class MonsterEntity : CharacterEntity
         if (NavMesh.SamplePosition(position, out navHit, 1000f, areaMask) &&
             NavMesh.CalculatePath(CacheTransform.position, navHit.position, areaMask, navPath))
         {
+            path = navPath;
             navPaths = new Queue<Vector3>(navPath.corners);
             // Dequeue first path it's not require for future movement
             navPaths.Dequeue();
             // Set movement
-            targetPosition = navPaths.Dequeue();
+            if (navPaths.Count > 0)
+                targetPosition = navPaths.Dequeue();
         }
         else
         {
@@ -377,7 +392,7 @@ public class MonsterEntity : CharacterEntity
                 (character as MonsterEntity).monsterTypeId == monsterTypeId)
                 continue;
 
-            if (character != null && character != this && character.Hp > 0 && 
+            if (character != null && character != this && character.Hp > 0 &&
                 Vector3.Distance(spawnPosition, character.CacheTransform.position) < followEnemyDistance)
             {
                 enemy = character;
@@ -385,17 +400,6 @@ public class MonsterEntity : CharacterEntity
             }
         }
         return false;
-    }
-
-    protected override void OnCollisionStay(Collision collision)
-    {
-        base.OnCollisionStay(collision);
-
-        if (collision.collider.CompareTag("Wall"))
-        {
-            // Find another position to move in next frame
-            lastUpdateMovementTime = Time.unscaledTime - updateMovementDuration;
-        }
     }
 
     public override bool ReceiveDamage(CharacterEntity attacker, int damage, byte type, int dataId, byte actionId)

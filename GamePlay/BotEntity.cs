@@ -152,9 +152,9 @@ public class BotEntity : CharacterEntity
             else if (isFixRandomMoveAroundPoint)
             {
                 GetMovePaths(new Vector3(
-                    fixRandomMoveAroundPoint.x + Random.Range(-1f, 1f) * fixRandomMoveAroundDistance,
+                    fixRandomMoveAroundPoint.x + (fixRandomMoveAroundDistance * RandomPosNeg()),
                     0,
-                    fixRandomMoveAroundPoint.z + Random.Range(-1f, 1f) * fixRandomMoveAroundDistance));
+                    fixRandomMoveAroundPoint.z + (fixRandomMoveAroundDistance * RandomPosNeg())));
             }
             else
             {

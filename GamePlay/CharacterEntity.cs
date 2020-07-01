@@ -821,16 +821,16 @@ public class CharacterEntity : BaseNetworkGameCharacter
     {
         if (direction.sqrMagnitude > 0)
         {
-            direction = direction.normalized;
+            if (direction.sqrMagnitude > 1)
+                direction = direction.normalized;
+            direction.y = 0;
 
             var targetSpeed = GetMoveSpeed() * (isDashing ? dashMoveSpeedMultiplier : 1f);
             var targetVelocity = direction * targetSpeed;
-
-            // Apply a force that attempts to reach our target velocity
-            Vector3 velocity = CacheRigidbody.velocity;
-            velocity.x = targetVelocity.x;
-            velocity.z = targetVelocity.z;
-            CacheRigidbody.velocity = velocity;
+            var rigidbodyVel = CacheRigidbody.velocity;
+            rigidbodyVel.y = 0;
+            if (rigidbodyVel.sqrMagnitude < 1)
+                CacheTransform.position += targetVelocity * Time.deltaTime;
         }
     }
 

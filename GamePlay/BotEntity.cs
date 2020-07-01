@@ -133,7 +133,6 @@ public class BotEntity : CharacterEntity
         if (Hp <= 0)
         {
             ServerRespawn(false);
-            CacheRigidbody.velocity = new Vector3(0, CacheRigidbody.velocity.y, 0);
             return;
         }
 
@@ -230,7 +229,6 @@ public class BotEntity : CharacterEntity
         if (isReachedTarget)
         {
             targetPosition = CacheTransform.position + (CacheTransform.forward * ReachedTargetDistance / 2f);
-            CacheRigidbody.velocity = new Vector3(0, CacheRigidbody.velocity.y, 0);
             if (navPaths.Count > 0)
                 targetPosition = navPaths.Dequeue();
         }

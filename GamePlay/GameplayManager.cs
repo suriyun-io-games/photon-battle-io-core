@@ -26,6 +26,7 @@ public class GameplayManager : MonoBehaviourPunCallbacks
     public int minDefend = 20;
     public int minMoveSpeed = 30;
     public int maxSpreadDamages = 6;
+    public bool divideSpreadedDamageAmount = false;
     public int addingStatPoint = 1;
     public float minAttackVaryRate = -0.07f;
     public float maxAttackVaryRate = 0.07f;

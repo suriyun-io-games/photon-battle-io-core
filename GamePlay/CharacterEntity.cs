@@ -860,10 +860,9 @@ public class CharacterEntity : BaseNetworkGameCharacter
             releasedUseSkillHotkeyId = -1;
         }
 
-        var velocity = CacheRigidbody.velocity;
         if (isGround && inputJump)
         {
-            CacheRigidbody.velocity = new Vector3(velocity.x, CalculateJumpVerticalSpeed(), velocity.z);
+            CacheRigidbody.velocity = new Vector3(CacheRigidbody.velocity.x, CalculateJumpVerticalSpeed(), CacheRigidbody.velocity.z);
             isGround = false;
             inputJump = false;
         }
@@ -900,7 +899,6 @@ public class CharacterEntity : BaseNetworkGameCharacter
 
     public void GetDamageLaunchTransform(bool isLeftHandWeapon, out Transform launchTransform)
     {
-        launchTransform = null;
         if (characterModel == null || !characterModel.TryGetDamageLaunchTransform(isLeftHandWeapon, out launchTransform))
             launchTransform = damageLaunchTransform;
     }

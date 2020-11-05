@@ -16,7 +16,7 @@ public class BRCharacterEntityExtra : MonoBehaviourPunCallbacks
             if (PhotonNetwork.IsMasterClient && value != _isSpawned)
             {
                 _isSpawned = value;
-                photonView.RPC("RpcUpdateIsSpawned", RpcTarget.Others, value);
+                photonView.OthersRPC(RpcUpdateIsSpawned, value);
             }
         }
     }
@@ -82,7 +82,7 @@ public class BRCharacterEntityExtra : MonoBehaviourPunCallbacks
         base.OnPlayerEnteredRoom(newPlayer);
         if (!PhotonNetwork.IsMasterClient)
             return;
-        photonView.RPC("RpcUpdateIsSpawned", newPlayer, isSpawned);
+        photonView.TargetRPC(RpcUpdateIsSpawned, newPlayer, isSpawned);
     }
 
     private void Update()
@@ -190,7 +190,7 @@ public class BRCharacterEntityExtra : MonoBehaviourPunCallbacks
         {
             var position = TempCharacterEntity.GetSpawnPosition();
             TempCharacterEntity.CacheTransform.position = position;
-            TempCharacterEntity.photonView.RPC("RpcTargetSpawn", TempCharacterEntity.photonView.Owner, position.x, position.y, position.z);
+            TempCharacterEntity.photonView.TargetRPC(TempCharacterEntity.RpcTargetSpawn, TempCharacterEntity.photonView.Owner, position.x, position.y, position.z);
             isSpawned = true;
         }
     }
@@ -213,7 +213,7 @@ public class BRCharacterEntityExtra : MonoBehaviourPunCallbacks
             return;
         var brGameplayManager = GameplayManager.Singleton as BRGameplayManager;
         if (brGameplayManager != null)
-            photonView.RPC("RpcRankResult", photonView.Owner, BaseNetworkGameManager.Singleton.CountAliveCharacters() + 1);
+            photonView.TargetRPC(RpcRankResult, photonView.Owner, BaseNetworkGameManager.Singleton.CountAliveCharacters() + 1);
     }
 
     IEnumerator ShowRankResultRoutine(int rank)
@@ -244,17 +244,17 @@ public class BRCharacterEntityExtra : MonoBehaviourPunCallbacks
         if (!isSpawned && brGameplayManager != null)
         {
             isSpawned = true;
-            photonView.RPC("RpcCharacterSpawned", RpcTarget.All, brGameplayManager.SpawnCharacter(TempCharacterEntity) + new Vector3(Random.Range(-2.5f, 2.5f), 0, Random.Range(-2.5f, 2.5f)));
+            photonView.AllRPC(RpcCharacterSpawned, brGameplayManager.SpawnCharacter(TempCharacterEntity) + new Vector3(Random.Range(-2.5f, 2.5f), 0, Random.Range(-2.5f, 2.5f)));
         }
     }
 
     public void CmdCharacterSpawn()
     {
-        photonView.RPC("RpcServerCharacterSpawn", RpcTarget.MasterClient);
+        photonView.MasterRPC(RpcServerCharacterSpawn);
     }
 
     [PunRPC]
-    protected void RpcServerCharacterSpawn()
+    public void RpcServerCharacterSpawn()
     {
         var brGameplayManager = GameplayManager.Singleton as BRGameplayManager;
         if (!isSpawned && brGameplayManager != null && brGameplayManager.CanSpawnCharacter(TempCharacterEntity))
@@ -262,7 +262,7 @@ public class BRCharacterEntityExtra : MonoBehaviourPunCallbacks
     }
 
     [PunRPC]
-    protected void RpcCharacterSpawned(Vector3 spawnPosition)
+    public void RpcCharacterSpawned(Vector3 spawnPosition)
     {
         TempCharacterEntity.CacheTransform.position = spawnPosition;
         TempCharacterEntity.CacheRigidbody.useGravity = true;
@@ -270,7 +270,7 @@ public class BRCharacterEntityExtra : MonoBehaviourPunCallbacks
     }
 
     [PunRPC]
-    protected virtual void RpcRankResult(int rank)
+    public virtual void RpcRankResult(int rank)
     {
         if (IsMine)
         {
@@ -282,7 +282,7 @@ public class BRCharacterEntityExtra : MonoBehaviourPunCallbacks
     }
 
     [PunRPC]
-    protected virtual void RpcUpdateIsSpawned(bool isSpawned)
+    public virtual void RpcUpdateIsSpawned(bool isSpawned)
     {
         _isSpawned = isSpawned;
     }

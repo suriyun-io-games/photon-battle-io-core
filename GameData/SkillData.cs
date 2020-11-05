@@ -14,7 +14,7 @@ public class SkillData : ScriptableObject
     {
         return GetId().MakeHashId();
     }
-    
+
     [Range(0, 7)]
     public sbyte hotkeyId;
     public Sprite icon;
@@ -39,14 +39,15 @@ public class SkillData : ScriptableObject
         if (attacker == null || !attacker.photonView.IsMine)
             return;
 
-        attacker.photonView.RPC("RpcEffect", RpcTarget.All, attacker.photonView.ViewID, CharacterEntity.RPC_EFFECT_SKILL_SPAWN, GetHashId(), default(byte));
+        attacker.photonView.AllRPC(attacker.RpcEffect, attacker.photonView.ViewID, CharacterEntity.RPC_EFFECT_SKILL_SPAWN, GetHashId(), default(byte));
 
         if (statusEffectPrefab && GameplayManager.Singleton.CanApplyStatusEffect(attacker, null))
-            attacker.photonView.RPC("RpcApplyStatusEffect", RpcTarget.All, statusEffectPrefab.GetHashId(), attacker.photonView.ViewID);
+            attacker.photonView.AllRPC(attacker.RpcApplyStatusEffect, statusEffectPrefab.GetHashId(), attacker.photonView.ViewID);
 
         if (!damagePrefab)
             return;
 
+        var gameNetworkManager = GameNetworkManager.Singleton;
         var spread = TotalSpreadDamages;
         var damage = (float)attacker.TotalAttack + increaseDamage + (attacker.TotalAttack * increaseDamageByRate);
         damage += Random.Range(GameplayManager.Singleton.minAttackVaryRate, GameplayManager.Singleton.maxAttackVaryRate) * damage;
@@ -77,8 +78,8 @@ public class SkillData : ScriptableObject
                 damageEntity.actionId = 0;
             }
 
-            GameNetworkManager.Singleton.photonView.RPC("RpcCharacterUseSkill", 
-                RpcTarget.Others,
+            gameNetworkManager.photonView.OthersRPC(
+                gameNetworkManager.RpcCharacterUseSkill,
                 GetHashId(),
                 (short)(direction.x * 100f),
                 (short)(direction.y * 100f),

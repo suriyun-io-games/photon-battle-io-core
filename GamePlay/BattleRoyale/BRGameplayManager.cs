@@ -217,7 +217,7 @@ public class BRGameplayManager : GameplayManager
             if (PhotonNetwork.IsMasterClient && value != currentCountdown)
             {
                 SimplePhotonNetworkManager.Singleton.SetRoomProperty(CUSTOM_ROOM_CURRENT_COUNTDOWN, value);
-                photonView.RPC("RpcOnCurrentCountdownChanged", RpcTarget.All, value);
+                photonView.AllRPC(RpcOnCurrentCountdownChanged, value);
                 _currentCountdown = value;
             }
         }
@@ -286,7 +286,7 @@ public class BRGameplayManager : GameplayManager
             if (PhotonNetwork.IsMasterClient && value != spawnerMoveCountdown)
             {
                 SimplePhotonNetworkManager.Singleton.SetRoomProperty(CUSTOM_ROOM_SPAWNER_MOVE_COUNTDOWN, value);
-                photonView.RPC("RpcOnSpawnerMoveCountdownChanged", RpcTarget.All, value);
+                photonView.AllRPC(RpcOnSpawnerMoveCountdownChanged, value);
                 _spawnerMoveCountdown = value;
             }
         }

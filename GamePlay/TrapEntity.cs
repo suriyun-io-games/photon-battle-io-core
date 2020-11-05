@@ -119,6 +119,6 @@ public class TrapEntity : MonoBehaviourPunCallbacks
 
         TriggerredTime[characterViewId] = time;
         character.Hp -= triggeredDamage;
-        character.photonView.RPC("RpcEffect", RpcTarget.All, photonView.ViewID, CharacterEntity.RPC_EFFECT_TRAP_HIT, default(int), default(byte));
+        character.photonView.AllRPC(character.RpcEffect, photonView.ViewID, CharacterEntity.RPC_EFFECT_TRAP_HIT, default(int), default(byte));
     }
 }

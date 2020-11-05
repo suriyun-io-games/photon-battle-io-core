@@ -17,7 +17,7 @@ public class PowerUpEntity : MonoBehaviourPunCallbacks
             if (PhotonNetwork.IsMasterClient && value != prefabName)
             {
                 _prefabName = value;
-                photonView.RPC("RpcUpdatePrefabName", RpcTarget.Others, value);
+                photonView.OthersRPC(RpcUpdatePrefabName, value);
             }
         }
     }
@@ -43,7 +43,7 @@ public class PowerUpEntity : MonoBehaviourPunCallbacks
         base.OnPlayerEnteredRoom(newPlayer);
         if (!PhotonNetwork.IsMasterClient)
             return;
-        photonView.RPC("RpcUpdatePrefabName", newPlayer, prefabName);
+        photonView.TargetRPC(RpcUpdatePrefabName, newPlayer, prefabName);
     }
 
     private void OnTriggerEnter(Collider other)

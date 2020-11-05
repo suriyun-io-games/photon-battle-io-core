@@ -102,7 +102,7 @@ public class BattleRoyaleNetworkGameRule : IONetworkGameRule
                         continue;
                     }
                     if (!character.IsDead)
-                        extra.photonView.RPC("RpcRankResult", extra.photonView.Owner, 1);
+                        extra.photonView.TargetRPC(extra.RpcRankResult, extra.photonView.Owner, 1);
                 }
             }
             // If some characters are not spawned, won't end match

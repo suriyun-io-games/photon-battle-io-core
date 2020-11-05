@@ -32,7 +32,7 @@ public class WeaponData : ItemData
         var addRotationX = 0f;
         var addRotationY = 0f;
         var addingRotationY = 360f / spread;
-        
+
         if (spread <= 16)
         {
             addRotationY = (-(spread - 1) * 15f);
@@ -55,8 +55,8 @@ public class WeaponData : ItemData
                 damageEntity.actionId = actionId;
             }
 
-            gameNetworkManager.photonView.RPC("RpcCharacterAttack",
-                RpcTarget.Others,
+            gameNetworkManager.photonView.OthersRPC(
+                gameNetworkManager.RpcCharacterAttack,
                 GetHashId(),
                 actionId,
                 (short)(direction.x * 100f),
@@ -70,7 +70,7 @@ public class WeaponData : ItemData
             addRotationY += addingRotationY;
         }
 
-        attacker.photonView.RPC("RpcEffect", RpcTarget.All, attacker.photonView.ViewID, CharacterEntity.RPC_EFFECT_DAMAGE_SPAWN, GetHashId(), actionId);
+        attacker.photonView.AllRPC(attacker.RpcEffect, attacker.photonView.ViewID, CharacterEntity.RPC_EFFECT_DAMAGE_SPAWN, GetHashId(), actionId);
     }
 
     public void SetupAnimations()

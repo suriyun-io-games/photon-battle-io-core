@@ -13,7 +13,7 @@ public class GameNetworkManager : BaseNetworkGameManager
     }
 
     [PunRPC]
-    protected void RpcCharacterAttack(
+    public void RpcCharacterAttack(
         int weaponId,
         byte actionId,
         short dirX,
@@ -37,7 +37,7 @@ public class GameNetworkManager : BaseNetworkGameManager
     }
 
     [PunRPC]
-    protected void RpcCharacterUseSkill(
+    public void RpcCharacterUseSkill(
         int skillId,
         short dirX,
         short dirY,

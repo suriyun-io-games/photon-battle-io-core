@@ -24,7 +24,7 @@ public class MonsterEntity : CharacterEntity
             if (PhotonNetwork.IsMasterClient)
             {
                 monsterPlayerName = value;
-                photonView.RPC("RpcUpdateMonsterName", RpcTarget.Others, value);
+                photonView.OthersRPC(RpcUpdateMonsterName, value);
             }
         }
     }
@@ -151,7 +151,7 @@ public class MonsterEntity : CharacterEntity
         if (!PhotonNetwork.IsMasterClient)
             return;
         base.SyncData();
-        photonView.RPC("RpcUpdateMonsterName", RpcTarget.Others, monsterPlayerName);
+        photonView.OthersRPC(RpcUpdateMonsterName, monsterPlayerName);
     }
 
 
@@ -160,7 +160,7 @@ public class MonsterEntity : CharacterEntity
         if (!PhotonNetwork.IsMasterClient)
             return;
         base.OnPlayerEnteredRoom(newPlayer);
-        photonView.RPC("RpcUpdateMonsterName", newPlayer, monsterPlayerName);
+        photonView.TargetRPC(RpcUpdateMonsterName, newPlayer, monsterPlayerName);
     }
 
     protected override void SetLocalPlayer()

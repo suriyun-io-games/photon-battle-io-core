@@ -40,6 +40,12 @@ public class BotEntity : CharacterEntity
             }
         }
     }
+
+    public override bool IsBot
+    {
+        get { return true; }
+    }
+
     public const float ReachedTargetDistance = 0.1f;
     [Header("Bot configs")]
     public float minimumAttackRange = 5f;

@@ -580,18 +580,25 @@ public class CharacterEntity : BaseNetworkGameCharacter
             var followCam = FindObjectOfType<FollowCamera>();
             followCam.target = CacheTransform;
             targetCamera = followCam.GetComponent<Camera>();
-            var uiGameplay = FindObjectOfType<UIGameplay>();
-            if (uiGameplay != null)
-                uiGameplay.FadeOut();
 
             foreach (var localPlayerObject in localPlayerObjects)
             {
                 localPlayerObject.SetActive(true);
             }
-            // Add some delay before ready to make sure that it can receive team and game rule
-            // TODO: Should improve this (Or remake team system, one which made by Photon is not work well)
-            Invoke(nameof(CmdReady), 0.1f);
+
+            NetworkManager.StartCoroutine(DelayReady());
         }
+    }
+
+    IEnumerator DelayReady()
+    {
+        yield return new WaitForSeconds(1);
+        // Add some delay before ready to make sure that it can receive team and game rule
+        // TODO: Should improve this (Or remake team system, one which made by Photon is not work well)
+        var uiGameplay = FindObjectOfType<UIGameplay>();
+        if (uiGameplay != null)
+            uiGameplay.FadeOut();
+        CmdReady();
     }
 
     protected override void Update()

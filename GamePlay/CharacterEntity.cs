@@ -586,7 +586,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
                 localPlayerObject.SetActive(true);
             }
 
-            NetworkManager.StartCoroutine(DelayReady());
+            StartCoroutine(DelayReady());
         }
     }
 

@@ -14,8 +14,6 @@ public class UIBlackFade : MonoBehaviour
     public CanvasGroup blackFade;
     public float fadeInSpeed = 5f;
     public float fadeOutSpeed = 3f;
-    public bool prepareFadeOutOnStart;
-    public bool fadeOutOnStart;
     public UnityEvent onFadeIn;
     public UnityEvent onFadeOut;
     public FadeState CurrentFadeState { get; protected set; }
@@ -27,16 +25,7 @@ public class UIBlackFade : MonoBehaviour
 
     void Awake()
     {
-        if (prepareFadeOutOnStart || fadeOutOnStart)
-            blackFade.alpha = 1;
-        else
-            blackFade.alpha = 0;
-    }
-
-    void Start()
-    {
-        if (fadeOutOnStart)
-            FadeOut();
+        blackFade.alpha = 1;
     }
 
     void Update()

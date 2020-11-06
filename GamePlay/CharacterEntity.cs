@@ -588,9 +588,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
             {
                 localPlayerObject.SetActive(true);
             }
-            // Add some delay before ready to make sure that it can receive team and game rule
-            // TODO: Should improve this (Or remake team system, one which made by Photon is not work well)
-            Invoke(nameof(CmdReady), 0.1f);
+            CmdReady();
         }
     }
 

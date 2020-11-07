@@ -102,9 +102,6 @@ public class TrapEntity : MonoBehaviourPunCallbacks
 
     private void OnTriggerStay(Collider other)
     {
-        if (!PhotonNetwork.IsMasterClient)
-            return;
-
         var character = other.GetComponent<CharacterEntity>();
         if (character == null)
             return;
@@ -118,7 +115,8 @@ public class TrapEntity : MonoBehaviourPunCallbacks
             return;
 
         TriggerredTime[characterViewId] = time;
-        character.Hp -= triggeredDamage;
-        character.photonView.AllRPC(character.RpcEffect, photonView.ViewID, CharacterEntity.RPC_EFFECT_TRAP_HIT, default(int), default(byte));
+        if (PhotonNetwork.IsMasterClient)
+            character.Hp -= triggeredDamage;
+        EffectEntity.PlayEffect(hitEffectPrefab, character.effectTransform);
     }
 }

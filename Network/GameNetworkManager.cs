@@ -13,53 +13,6 @@ public class GameNetworkManager : BaseNetworkGameManager
     }
 
     [PunRPC]
-    public void RpcCharacterAttack(
-        int weaponId,
-        byte actionId,
-        short dirX,
-        short dirY,
-        short dirZ,
-        int attackerViewId,
-        float addRotationX,
-        float addRotationY,
-        int damage)
-    {
-        // Instantiates damage entities on clients only
-        var direction = new Vector3((float)dirX * 0.01f, (float)dirY * 0.01f, (float)dirZ * 0.01f);
-        var damageEntity = DamageEntity.InstantiateNewEntityByWeapon(weaponId, actionId, direction, attackerViewId, addRotationX, addRotationY);
-        if (damageEntity)
-        {
-            damageEntity.weaponDamage = damage;
-            damageEntity.hitEffectType = CharacterEntity.RPC_EFFECT_DAMAGE_HIT;
-            damageEntity.relateDataId = weaponId;
-            damageEntity.actionId = actionId;
-        }
-    }
-
-    [PunRPC]
-    public void RpcCharacterUseSkill(
-        int skillId,
-        short dirX,
-        short dirY,
-        short dirZ,
-        int attackerViewId,
-        float addRotationX,
-        float addRotationY,
-        int damage)
-    {
-        // Instantiates damage entities on clients only
-        var direction = new Vector3((float)dirX * 0.01f, (float)dirY * 0.01f, (float)dirZ * 0.01f);
-        var damageEntity = DamageEntity.InstantiateNewEntityBySkill(skillId, direction, attackerViewId, addRotationX, addRotationY);
-        if (damageEntity)
-        {
-            damageEntity.weaponDamage = damage;
-            damageEntity.hitEffectType = CharacterEntity.RPC_EFFECT_SKILL_HIT;
-            damageEntity.relateDataId = skillId;
-            damageEntity.actionId = 0;
-        }
-    }
-
-    [PunRPC]
     protected override void RpcAddPlayer()
     {
         var position = Vector3.zero;

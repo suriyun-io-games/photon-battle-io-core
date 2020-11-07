@@ -18,10 +18,11 @@ public class WeaponData : ItemData
 
     public void Launch(CharacterEntity attacker, byte actionId)
     {
-        if (attacker == null || !attacker.photonView.IsMine)
+        if (!attacker)
             return;
 
-        var gameNetworkManager = GameNetworkManager.Singleton;
+        EffectEntity.PlayEffect(damagePrefab.spawnEffectPrefab, attacker.effectTransform);
+
         var gameplayManager = GameplayManager.Singleton;
         var spread = attacker.TotalSpreadDamages;
         var damage = (float)attacker.TotalAttack;
@@ -50,27 +51,11 @@ public class WeaponData : ItemData
             if (damageEntity)
             {
                 damageEntity.weaponDamage = Mathf.CeilToInt(damage);
-                damageEntity.hitEffectType = CharacterEntity.RPC_EFFECT_DAMAGE_HIT;
                 damageEntity.relateDataId = GetHashId();
                 damageEntity.actionId = actionId;
             }
-
-            gameNetworkManager.photonView.OthersRPC(
-                gameNetworkManager.RpcCharacterAttack,
-                GetHashId(),
-                actionId,
-                (short)(direction.x * 100f),
-                (short)(direction.y * 100f),
-                (short)(direction.z * 100f),
-                attacker.photonView.ViewID,
-                addRotationX,
-                addRotationY,
-                Mathf.CeilToInt(damage));
-
             addRotationY += addingRotationY;
         }
-
-        attacker.photonView.AllRPC(attacker.RpcEffect, attacker.photonView.ViewID, CharacterEntity.RPC_EFFECT_DAMAGE_SPAWN, GetHashId(), actionId);
     }
 
     public void SetupAnimations()

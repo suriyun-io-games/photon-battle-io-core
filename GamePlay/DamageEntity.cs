@@ -36,7 +36,6 @@ public class DamageEntity : MonoBehaviour
     private float addRotationY;
     private float? colliderExtents;
     public int weaponDamage { get; set; }
-    public byte hitEffectType { get; set; }
     public int relateDataId { get; set; }
     public byte actionId { get; set; }
 
@@ -147,8 +146,12 @@ public class DamageEntity : MonoBehaviour
             return;
 
         var hitSomeAliveCharacter = false;
-        if (otherCharacter != null && otherCharacter.Hp > 0)
+        if (otherCharacter != null &&
+            otherCharacter.Hp > 0 &&
+            !otherCharacter.isInvincible &&
+            GameplayManager.Singleton.CanReceiveDamage(otherCharacter, attacker))
         {
+            EffectEntity.PlayEffect(hitEffectPrefab, otherCharacter.effectTransform);
             ApplyDamage(otherCharacter);
             hitSomeAliveCharacter = true;
         }
@@ -182,8 +185,14 @@ public class DamageEntity : MonoBehaviour
         {
             hitCharacter = colliders[i].GetComponent<CharacterEntity>();
             // If not character or character is attacker, skip it.
-            if (hitCharacter == null || hitCharacter == otherCharacter || hitCharacter.photonView.ViewID == attackerViewId || hitCharacter.Hp <= 0)
+            if (hitCharacter == null ||
+                hitCharacter == otherCharacter ||
+                hitCharacter.photonView.ViewID == attackerViewId ||
+                hitCharacter.Hp <= 0 ||
+                hitCharacter.isInvincible ||
+                !GameplayManager.Singleton.CanReceiveDamage(hitCharacter, attacker))
                 continue;
+            EffectEntity.PlayEffect(hitEffectPrefab, hitCharacter.effectTransform);
             ApplyDamage(hitCharacter);
             hitSomeAliveCharacter = true;
         }
@@ -195,7 +204,6 @@ public class DamageEntity : MonoBehaviour
         // Damage receiving calculation on server only
         if (PhotonNetwork.IsMasterClient && Attacker)
         {
-            target.ReceiveDamage(Attacker, weaponDamage, hitEffectType, relateDataId, actionId);
             if (statusEffectPrefab && GameplayManager.Singleton.CanApplyStatusEffect(target, Attacker))
                 target.photonView.AllRPC(target.RpcApplyStatusEffect, statusEffectPrefab.GetHashId(), Attacker.photonView.ViewID);
         }
@@ -232,7 +240,7 @@ public class DamageEntity : MonoBehaviour
         float addRotationX,
         float addRotationY)
     {
-        WeaponData weaponData = null;
+        WeaponData weaponData;
         if (GameInstance.Weapons.TryGetValue(weaponId, out weaponData))
         {
             var damagePrefab = weaponData.damagePrefab;
@@ -263,7 +271,7 @@ public class DamageEntity : MonoBehaviour
         float addRotationX,
         float addRotationY)
     {
-        SkillData skillData = null;
+        SkillData skillData;
         if (GameInstance.Skills.TryGetValue(skillId, out skillData))
         {
             var damagePrefab = skillData.damagePrefab;

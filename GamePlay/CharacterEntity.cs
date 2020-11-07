@@ -11,11 +11,6 @@ using Photon.Realtime;
 public class CharacterEntity : BaseNetworkGameCharacter
 {
     public const float DISCONNECT_WHEN_NOT_RESPAWN_DURATION = 60;
-    public const byte RPC_EFFECT_DAMAGE_SPAWN = 0;
-    public const byte RPC_EFFECT_DAMAGE_HIT = 1;
-    public const byte RPC_EFFECT_TRAP_HIT = 2;
-    public const byte RPC_EFFECT_SKILL_SPAWN = 3;
-    public const byte RPC_EFFECT_SKILL_HIT = 4;
 
     public Transform damageLaunchTransform;
     public Transform effectTransform;
@@ -597,7 +592,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
 
     IEnumerator DelayReady()
     {
-        yield return new WaitForSeconds(1);
+        yield return new WaitForSeconds(0.5f);
         // Add some delay before ready to make sure that it can receive team and game rule
         // TODO: Should improve this (Or remake team system, one which made by Photon is not work well)
         var uiGameplay = FindObjectOfType<UIGameplay>();
@@ -969,9 +964,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
                 byte actionId = (byte)attackingActionId;
                 yield return StartCoroutine(PlayAttackAnimationRoutine(attackAnimation, weaponData.attackFx, () =>
                 {
-                    // Launch damage entity on owning client then update on other clients
-                    if (photonView.IsMine)
-                        weaponData.Launch(this, actionId);
+                    weaponData.Launch(this, actionId);
                 }));
                 // If player still attacking, random new attacking action id
                 if (PhotonNetwork.IsMasterClient && attackingActionId >= 0 && weaponData != null)
@@ -998,9 +991,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
                 attackingSpreadDamages = skillData.TotalSpreadDamages;
                 yield return StartCoroutine(PlayAttackAnimationRoutine(skillData.attackAnimation, skillData.attackFx, () =>
                 {
-                    // Launch damage entity on owning client then update on other clients
-                    if (photonView.IsMine)
-                        skillData.Launch(this);
+                    skillData.Launch(this);
                 }));
                 attackingDamageEntity = null;
                 attackingSpreadDamages = 0;
@@ -1048,11 +1039,9 @@ public class CharacterEntity : BaseNetworkGameCharacter
         if (Hp <= 0 || isInvincible)
             return false;
 
-        var gameplayManager = GameplayManager.Singleton;
-        if (!gameplayManager.CanReceiveDamage(this, attacker))
+        if (!GameplayManager.Singleton.CanReceiveDamage(this, attacker))
             return false;
 
-        photonView.AllRPC(RpcEffect, attacker.photonView.ViewID, type, dataId, actionId);
         int reduceHp = (int)(damage + ((float)damage * TotalIncreaseDamageRate) - ((float)damage * TotalReduceReceiveDamageRate)) - TotalDefend;
         if (reduceHp < 0)
             reduceHp = 0;
@@ -1158,7 +1147,6 @@ public class CharacterEntity : BaseNetworkGameCharacter
             return;
         if (Respawn(isWatchedAds))
         {
-            var gameplayManager = GameplayManager.Singleton;
             ServerInvincible();
             OnSpawn();
             var position = GetSpawnPosition();
@@ -1263,9 +1251,8 @@ public class CharacterEntity : BaseNetworkGameCharacter
     {
         if (statPoint > 0)
         {
-            var gameplay = GameplayManager.Singleton;
             CharacterAttributes attribute;
-            if (gameplay.attributes.TryGetValue(name, out attribute))
+            if (GameplayManager.Singleton.attributes.TryGetValue(name, out attribute))
             {
                 addStats += attribute.stats;
                 var changingWeapon = attribute.changingWeapon;
@@ -1308,63 +1295,6 @@ public class CharacterEntity : BaseNetworkGameCharacter
             appliedStatusEffects.Remove(dataId);
             if (statusEffect)
                 Destroy(statusEffect.gameObject);
-        }
-    }
-
-    [PunRPC]
-    public void RpcEffect(int triggerViewId, byte effectType, int dataId, byte actionId)
-    {
-        var triggerObject = PhotonView.Find(triggerViewId);
-
-        if (triggerObject != null)
-        {
-            if (effectType == RPC_EFFECT_DAMAGE_SPAWN || effectType == RPC_EFFECT_DAMAGE_HIT)
-            {
-                WeaponData weaponData;
-                if (GameInstance.Weapons.TryGetValue(dataId, out weaponData))
-                {
-                    var damagePrefab = weaponData.damagePrefab;
-                    if (weaponData.AttackAnimations.ContainsKey(actionId) &&
-                        weaponData.AttackAnimations[actionId].damagePrefab != null)
-                        damagePrefab = weaponData.AttackAnimations[actionId].damagePrefab;
-                    if (damagePrefab)
-                    {
-                        switch (effectType)
-                        {
-                            case RPC_EFFECT_DAMAGE_SPAWN:
-                                EffectEntity.PlayEffect(damagePrefab.spawnEffectPrefab, effectTransform);
-                                break;
-                            case RPC_EFFECT_DAMAGE_HIT:
-                                EffectEntity.PlayEffect(damagePrefab.hitEffectPrefab, effectTransform);
-                                break;
-                        }
-                    }
-                }
-            }
-            else if (effectType == RPC_EFFECT_TRAP_HIT)
-            {
-                var trap = triggerObject.GetComponent<TrapEntity>();
-                if (trap != null)
-                    EffectEntity.PlayEffect(trap.hitEffectPrefab, effectTransform);
-            }
-            else if (effectType == RPC_EFFECT_SKILL_SPAWN || effectType == RPC_EFFECT_SKILL_HIT)
-            {
-                SkillData skillData;
-                if (GameInstance.Skills.TryGetValue(dataId, out skillData) &&
-                    skillData.damagePrefab != null)
-                {
-                    var damagePrefab = skillData.damagePrefab;
-                    switch (effectType)
-                    {
-                        case RPC_EFFECT_SKILL_SPAWN:
-                            EffectEntity.PlayEffect(damagePrefab.spawnEffectPrefab, effectTransform);
-                            break;
-                        case RPC_EFFECT_SKILL_HIT:
-                            EffectEntity.PlayEffect(damagePrefab.hitEffectPrefab, effectTransform);
-                            break;
-                    }
-                }
-            }
         }
     }
 

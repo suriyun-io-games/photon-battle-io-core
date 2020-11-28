@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using Photon.Pun;
+using System.Collections.Generic;
 
 public class IONetworkGameRule : BaseNetworkGameRule
 {
@@ -95,5 +96,10 @@ public class IONetworkGameRule : BaseNetworkGameRule
             ui = Instantiate(uiGameplayPrefab);
         if (ui != null)
             ui.gameObject.SetActive(true);
+    }
+
+    protected override List<BaseNetworkGameCharacter> GetBots()
+    {
+        return new List<BaseNetworkGameCharacter>(FindObjectsOfType<BotEntity>());
     }
 }

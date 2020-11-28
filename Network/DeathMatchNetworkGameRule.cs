@@ -32,9 +32,9 @@ public class DeathMatchNetworkGameRule : IONetworkGameRule
         }
     }
 
-    public override void OnStartServer(BaseNetworkGameManager manager)
+    public override void OnStartMaster(BaseNetworkGameManager manager)
     {
-        base.OnStartServer(manager);
+        base.OnStartMaster(manager);
         endMatchCalled = false;
     }
 

@@ -35,7 +35,7 @@ public class BattleRoyaleNetworkGameRule : IONetworkGameRule
         }
     }
 
-    public override void OnStartServer(BaseNetworkGameManager manager)
+    public override void OnStartMaster(BaseNetworkGameManager manager)
     {
         networkManager = manager;
         BotCount = botCount;

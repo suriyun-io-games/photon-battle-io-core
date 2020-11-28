@@ -46,10 +46,11 @@ public class SkillData : ScriptableObject
             return;
 
         EffectEntity.PlayEffect(damagePrefab.spawnEffectPrefab, attacker.effectTransform);
-        var gameNetworkManager = GameNetworkManager.Singleton;
         var spread = TotalSpreadDamages;
         var damage = (float)attacker.TotalAttack + increaseDamage + (attacker.TotalAttack * increaseDamageByRate);
         damage += Random.Range(GameplayManager.Singleton.minAttackVaryRate, GameplayManager.Singleton.maxAttackVaryRate) * damage;
+        if (damage <= 0f)
+            damage = GameplayManager.Singleton.minDamage;
 
         var addRotationX = 0f;
         var addRotationY = 0f;

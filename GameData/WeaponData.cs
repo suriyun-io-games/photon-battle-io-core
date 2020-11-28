@@ -23,12 +23,13 @@ public class WeaponData : ItemData
 
         EffectEntity.PlayEffect(damagePrefab.spawnEffectPrefab, attacker.effectTransform);
 
-        var gameplayManager = GameplayManager.Singleton;
         var spread = attacker.TotalSpreadDamages;
         var damage = (float)attacker.TotalAttack;
-        damage += Random.Range(gameplayManager.minAttackVaryRate, gameplayManager.maxAttackVaryRate) * damage;
-        if (gameplayManager.divideSpreadedDamageAmount)
+        damage += Random.Range(GameplayManager.Singleton.minAttackVaryRate, GameplayManager.Singleton.maxAttackVaryRate) * damage;
+        if (GameplayManager.Singleton.divideSpreadedDamageAmount)
             damage /= spread;
+        if (damage <= 0f)
+            damage = GameplayManager.Singleton.minDamage;
 
         var addRotationX = 0f;
         var addRotationY = 0f;

@@ -1034,7 +1034,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
         }
     }
 
-    public virtual bool ReceiveDamage(CharacterEntity attacker, int damage, byte type, int dataId, byte actionId)
+    public virtual bool ReceiveDamage(CharacterEntity attacker, int damage)
     {
         if (Hp <= 0 || isInvincible)
             return false;

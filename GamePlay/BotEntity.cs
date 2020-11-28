@@ -348,9 +348,9 @@ public class BotEntity : CharacterEntity
         return false;
     }
 
-    public override bool ReceiveDamage(CharacterEntity attacker, int damage, byte type, int dataId, byte actionId)
+    public override bool ReceiveDamage(CharacterEntity attacker, int damage)
     {
-        if (base.ReceiveDamage(attacker, damage, type, dataId, actionId))
+        if (base.ReceiveDamage(attacker, damage))
         {
             switch (characteristic)
             {

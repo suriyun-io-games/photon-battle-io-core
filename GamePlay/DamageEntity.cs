@@ -204,6 +204,7 @@ public class DamageEntity : MonoBehaviour
         // Damage receiving calculation on server only
         if (PhotonNetwork.IsMasterClient && Attacker)
         {
+            target.ReceiveDamage(Attacker, weaponDamage);
             if (statusEffectPrefab && GameplayManager.Singleton.CanApplyStatusEffect(target, Attacker))
                 target.photonView.AllRPC(target.RpcApplyStatusEffect, statusEffectPrefab.GetHashId(), Attacker.photonView.ViewID);
         }

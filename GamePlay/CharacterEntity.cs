@@ -4,7 +4,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using Photon.Pun;
-using Photon.Pun.UtilityScripts;
 using Photon.Realtime;
 
 [RequireComponent(typeof(Rigidbody))]
@@ -594,7 +593,6 @@ public class CharacterEntity : BaseNetworkGameCharacter
     {
         yield return new WaitForSeconds(0.5f);
         // Add some delay before ready to make sure that it can receive team and game rule
-        // TODO: Should improve this (Or remake team system, one which made by Photon is not work well)
         var uiGameplay = FindObjectOfType<UIGameplay>();
         if (uiGameplay != null)
             uiGameplay.FadeOut();

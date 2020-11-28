@@ -73,7 +73,7 @@ public class BRGameplayManager : GameplayManager
     {
         get
         {
-            try { return (int)SimplePhotonNetworkManager.Singleton.GetRoomProperty(CUSTOM_ROOM_CURRENT_PATTERN); } catch { }
+            try { return SimplePhotonNetworkManager.Singleton.GetRoomProperty<int>(CUSTOM_ROOM_CURRENT_PATTERN); } catch { }
             return _currentPattern;
         }
         set
@@ -90,7 +90,7 @@ public class BRGameplayManager : GameplayManager
     {
         get
         {
-            try { return (int)SimplePhotonNetworkManager.Singleton.GetRoomProperty(CUSTOM_ROOM_CURRENT_CIRCLE); } catch { }
+            try { return SimplePhotonNetworkManager.Singleton.GetRoomProperty<int>(CUSTOM_ROOM_CURRENT_CIRCLE); } catch { }
             return _currentCircle;
         }
         set
@@ -107,7 +107,7 @@ public class BRGameplayManager : GameplayManager
     {
         get
         {
-            try { return (float)SimplePhotonNetworkManager.Singleton.GetRoomProperty(CUSTOM_ROOM_CURRENT_RADIUS); } catch { }
+            try { return SimplePhotonNetworkManager.Singleton.GetRoomProperty<float>(CUSTOM_ROOM_CURRENT_RADIUS); } catch { }
             return _currentRadius;
         }
         set
@@ -124,7 +124,7 @@ public class BRGameplayManager : GameplayManager
     {
         get
         {
-            try { return (Vector3)SimplePhotonNetworkManager.Singleton.GetRoomProperty(CUSTOM_ROOM_CURRENT_CENTER_POSITION); } catch { }
+            try { return SimplePhotonNetworkManager.Singleton.GetRoomProperty<Vector3>(CUSTOM_ROOM_CURRENT_CENTER_POSITION); } catch { }
             return _currentCenterPosition;
         }
         set
@@ -141,7 +141,7 @@ public class BRGameplayManager : GameplayManager
     {
         get
         {
-            try { return (float)SimplePhotonNetworkManager.Singleton.GetRoomProperty(CUSTOM_ROOM_NEXT_RADIUS); } catch { }
+            try { return SimplePhotonNetworkManager.Singleton.GetRoomProperty<float>(CUSTOM_ROOM_NEXT_RADIUS); } catch { }
             return _nextRadius;
         }
         set
@@ -158,7 +158,7 @@ public class BRGameplayManager : GameplayManager
     {
         get
         {
-            try { return (Vector3)SimplePhotonNetworkManager.Singleton.GetRoomProperty(CUSTOM_ROOM_NEXT_CENTER_POSITION); } catch { }
+            try { return SimplePhotonNetworkManager.Singleton.GetRoomProperty<Vector3>(CUSTOM_ROOM_NEXT_CENTER_POSITION); } catch { }
             return _nextCenterPosition;
         }
         set
@@ -175,7 +175,7 @@ public class BRGameplayManager : GameplayManager
     {
         get
         {
-            try { return (BRState)SimplePhotonNetworkManager.Singleton.GetRoomProperty(CUSTOM_ROOM_CURRENT_STATE); } catch { }
+            try { return (BRState)SimplePhotonNetworkManager.Singleton.GetRoomProperty<byte>(CUSTOM_ROOM_CURRENT_STATE); } catch { }
             return _currentState;
         }
         set
@@ -192,7 +192,7 @@ public class BRGameplayManager : GameplayManager
     {
         get
         {
-            try { return (float)SimplePhotonNetworkManager.Singleton.GetRoomProperty(CUSTOM_ROOM_CURRENT_DURATION); } catch { }
+            try { return SimplePhotonNetworkManager.Singleton.GetRoomProperty<float>(CUSTOM_ROOM_CURRENT_DURATION); } catch { }
             return _currentDuration;
         }
         set
@@ -209,7 +209,7 @@ public class BRGameplayManager : GameplayManager
     {
         get
         {
-            try { return (float)SimplePhotonNetworkManager.Singleton.GetRoomProperty(CUSTOM_ROOM_CURRENT_COUNTDOWN); } catch { }
+            try { return SimplePhotonNetworkManager.Singleton.GetRoomProperty<float>(CUSTOM_ROOM_CURRENT_COUNTDOWN); } catch { }
             return _currentCountdown;
         }
         set
@@ -227,7 +227,7 @@ public class BRGameplayManager : GameplayManager
     {
         get
         {
-            try { return (Vector3)SimplePhotonNetworkManager.Singleton.GetRoomProperty(CUSTOM_ROOM_SPAWNER_MOVE_FROM); } catch { }
+            try { return SimplePhotonNetworkManager.Singleton.GetRoomProperty<Vector3>(CUSTOM_ROOM_SPAWNER_MOVE_FROM); } catch { }
             return _spawnerMoveFrom;
         }
         set
@@ -244,7 +244,7 @@ public class BRGameplayManager : GameplayManager
     {
         get
         {
-            try { return (Vector3)SimplePhotonNetworkManager.Singleton.GetRoomProperty(CUSTOM_ROOM_SPAWNER_MOVE_TO); } catch { }
+            try { return SimplePhotonNetworkManager.Singleton.GetRoomProperty<Vector3>(CUSTOM_ROOM_SPAWNER_MOVE_TO); } catch { }
             return _spawnerMoveTo;
         }
         set
@@ -261,7 +261,7 @@ public class BRGameplayManager : GameplayManager
     {
         get
         {
-            try { return (float)SimplePhotonNetworkManager.Singleton.GetRoomProperty(CUSTOM_ROOM_SPAWNER_MOVE_DURATION); } catch { }
+            try { return SimplePhotonNetworkManager.Singleton.GetRoomProperty<float>(CUSTOM_ROOM_SPAWNER_MOVE_DURATION); } catch { }
             return _spawnerMoveDuration;
         }
         set
@@ -278,7 +278,7 @@ public class BRGameplayManager : GameplayManager
     {
         get
         {
-            try { return (float)SimplePhotonNetworkManager.Singleton.GetRoomProperty(CUSTOM_ROOM_SPAWNER_MOVE_COUNTDOWN); } catch { }
+            try { return SimplePhotonNetworkManager.Singleton.GetRoomProperty<float>(CUSTOM_ROOM_SPAWNER_MOVE_COUNTDOWN); } catch { }
             return _spawnerMoveCountdown;
         }
         set
@@ -296,7 +296,7 @@ public class BRGameplayManager : GameplayManager
     {
         get
         {
-            try { return (int)SimplePhotonNetworkManager.Singleton.GetRoomProperty(CUSTOM_ROOM_COUNT_ALIVE_CHARACTERS); } catch { }
+            try { return SimplePhotonNetworkManager.Singleton.GetRoomProperty<int>(CUSTOM_ROOM_COUNT_ALIVE_CHARACTERS); } catch { }
             return _countAliveCharacters;
         }
         set
@@ -313,7 +313,7 @@ public class BRGameplayManager : GameplayManager
     {
         get
         {
-            try { return (int)SimplePhotonNetworkManager.Singleton.GetRoomProperty(CUSTOM_ROOM_COUNT_ALL_CHARACTERS); } catch { }
+            try { return SimplePhotonNetworkManager.Singleton.GetRoomProperty<int>(CUSTOM_ROOM_COUNT_ALL_CHARACTERS); } catch { }
             return _countAllCharacters;
         }
         set

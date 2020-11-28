@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 
 public class TeamDeathMatchNetworkGameRule : IONetworkGameRule
@@ -20,7 +21,6 @@ public class TeamDeathMatchNetworkGameRule : IONetworkGameRule
 
     protected bool endMatchCalled;
     protected bool isLeavingRoom;
-    protected Coroutine endMatchCoroutine;
 
     protected override void EndMatch()
     {
@@ -28,7 +28,7 @@ public class TeamDeathMatchNetworkGameRule : IONetworkGameRule
         {
             isLeavingRoom = true;
             SetRewards((BaseNetworkGameCharacter.Local as CharacterEntity).rank);
-            endMatchCoroutine = networkManager.StartCoroutine(EndMatchRoutine());
+            EndMatchRoutine();
             endMatchCalled = true;
         }
     }
@@ -50,12 +50,12 @@ public class TeamDeathMatchNetworkGameRule : IONetworkGameRule
         MatchRewardHandler.SetRewards(rank, rewards);
     }
 
-    IEnumerator EndMatchRoutine()
+    async void EndMatchRoutine()
     {
         EndMatchCountingDown = endMatchCountDown;
         while (EndMatchCountingDown > 0)
         {
-            yield return new WaitForSeconds(1);
+            await Task.Delay(1000);
             --EndMatchCountingDown;
         }
         if (isLeavingRoom)

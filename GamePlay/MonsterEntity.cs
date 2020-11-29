@@ -29,6 +29,12 @@ public class MonsterEntity : CharacterEntity
         }
     }
 
+    public override byte playerTeam
+    {
+        get { return 0; }
+        set { }
+    }
+
     public override bool IsBot
     {
         get { return true; }

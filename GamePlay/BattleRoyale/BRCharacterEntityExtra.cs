@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Photon.Pun;
 using Photon.Realtime;
+using System.Threading.Tasks;
 
 [RequireComponent(typeof(CharacterEntity))]
 public class BRCharacterEntityExtra : MonoBehaviourPunCallbacks
@@ -198,14 +199,6 @@ public class BRCharacterEntityExtra : MonoBehaviourPunCallbacks
             photonView.TargetRPC(RpcRankResult, photonView.Owner, BaseNetworkGameManager.Singleton.CountAliveCharacters() + 1);
     }
 
-    IEnumerator ShowRankResultRoutine(int rank)
-    {
-        yield return new WaitForSeconds(3f);
-        var ui = UIBRGameplay.Singleton;
-        if (ui != null)
-            ui.ShowRankResult(rank);
-    }
-
     protected virtual void OnCollisionEnter(Collision collision)
     {
         if (isSpawned && !isGroundOnce && collision.impulse.y > 0)
@@ -254,13 +247,18 @@ public class BRCharacterEntityExtra : MonoBehaviourPunCallbacks
     [PunRPC]
     public virtual void RpcRankResult(int rank)
     {
-        if (IsMine)
-        {
-            if (GameNetworkManager.Singleton.gameRule != null &&
-                GameNetworkManager.Singleton.gameRule is BattleRoyaleNetworkGameRule)
-                (GameNetworkManager.Singleton.gameRule as BattleRoyaleNetworkGameRule).SetRewards(rank);
-            StartCoroutine(ShowRankResultRoutine(rank));
-        }
+        if (!IsMine)
+            return;
+        if (GameNetworkManager.Singleton.gameRule is BattleRoyaleNetworkGameRule)
+            (GameNetworkManager.Singleton.gameRule as BattleRoyaleNetworkGameRule).SetRewards(rank);
+        ShowRankResultRoutine(rank);
+    }
+
+    async void ShowRankResultRoutine(int rank)
+    {
+        await Task.Delay(3000);
+        if (UIBRGameplay.Singleton != null)
+            UIBRGameplay.Singleton.ShowRankResult(rank);
     }
 
     [PunRPC]

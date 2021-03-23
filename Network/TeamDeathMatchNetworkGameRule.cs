@@ -19,7 +19,8 @@ public class TeamDeathMatchNetworkGameRule : IONetworkGameRule
     public override void OnStopConnection(BaseNetworkGameManager manager)
     {
         base.OnStopConnection(manager);
-        MatchRewardHandler.SetRewards(BaseNetworkGameCharacter.LocalRank, rewards);
+        if (IsMatchEnded)
+            MatchRewardHandler.SetRewards(BaseNetworkGameCharacter.LocalRank, rewards);
     }
 
     public override bool RespawnCharacter(BaseNetworkGameCharacter character, params object[] extraParams)

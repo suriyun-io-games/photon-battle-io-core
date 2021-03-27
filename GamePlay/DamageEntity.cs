@@ -36,7 +36,6 @@ public class DamageEntity : MonoBehaviour
     private float addRotationY;
     private float? colliderExtents;
     public int weaponDamage { get; set; }
-    public int relateDataId { get; set; }
     public byte actionId { get; set; }
 
     private CharacterEntity attacker;
@@ -151,7 +150,8 @@ public class DamageEntity : MonoBehaviour
             !otherCharacter.isInvincible &&
             GameplayManager.Singleton.CanReceiveDamage(otherCharacter, attacker))
         {
-            EffectEntity.PlayEffect(hitEffectPrefab, otherCharacter.effectTransform);
+            if (!otherCharacter.IsHidding)
+                EffectEntity.PlayEffect(hitEffectPrefab, otherCharacter.effectTransform);
             ApplyDamage(otherCharacter);
             hitSomeAliveCharacter = true;
         }
@@ -192,7 +192,8 @@ public class DamageEntity : MonoBehaviour
                 hitCharacter.isInvincible ||
                 !GameplayManager.Singleton.CanReceiveDamage(hitCharacter, attacker))
                 continue;
-            EffectEntity.PlayEffect(hitEffectPrefab, hitCharacter.effectTransform);
+            if (!hitCharacter.IsHidding)
+                EffectEntity.PlayEffect(hitEffectPrefab, hitCharacter.effectTransform);
             ApplyDamage(hitCharacter);
             hitSomeAliveCharacter = true;
         }

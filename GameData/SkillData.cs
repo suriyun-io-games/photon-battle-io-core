@@ -45,7 +45,8 @@ public class SkillData : ScriptableObject
         if (!damagePrefab)
             return;
 
-        EffectEntity.PlayEffect(damagePrefab.spawnEffectPrefab, attacker.effectTransform);
+        if (!attacker.IsHidding)
+            EffectEntity.PlayEffect(damagePrefab.spawnEffectPrefab, attacker.effectTransform);
         var spread = TotalSpreadDamages;
         var damage = (float)attacker.TotalAttack + increaseDamage + (attacker.TotalAttack * increaseDamageByRate);
         damage += Random.Range(GameplayManager.Singleton.minAttackVaryRate, GameplayManager.Singleton.maxAttackVaryRate) * damage;
@@ -73,7 +74,6 @@ public class SkillData : ScriptableObject
             if (damageEntity)
             {
                 damageEntity.weaponDamage = Mathf.CeilToInt(damage);
-                damageEntity.relateDataId = GetHashId();
                 damageEntity.actionId = 0;
             }
 

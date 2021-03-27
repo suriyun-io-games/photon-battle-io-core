@@ -21,7 +21,8 @@ public class WeaponData : ItemData
         if (!attacker)
             return;
 
-        EffectEntity.PlayEffect(damagePrefab.spawnEffectPrefab, attacker.effectTransform);
+        if (!attacker.IsHidding)
+            EffectEntity.PlayEffect(damagePrefab.spawnEffectPrefab, attacker.effectTransform);
 
         var spread = attacker.TotalSpreadDamages;
         var damage = (float)attacker.TotalAttack;
@@ -52,7 +53,6 @@ public class WeaponData : ItemData
             if (damageEntity)
             {
                 damageEntity.weaponDamage = Mathf.CeilToInt(damage);
-                damageEntity.relateDataId = GetHashId();
                 damageEntity.actionId = actionId;
             }
             addRotationY += addingRotationY;

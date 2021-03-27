@@ -322,6 +322,8 @@ public class CharacterEntity : BaseNetworkGameCharacter
     public int attackingSpreadDamages { get; private set; }
     public float deathTime { get; private set; }
     public float invincibleTime { get; private set; }
+    public Vector3 aimPosition { get; protected set; }
+    public bool currentActionIsForLeftHand { get; protected set; }
 
     public Dictionary<sbyte, SkillData> Skills
     {
@@ -633,6 +635,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
             hpText.text = hp + "/" + TotalHp;
         if (levelText != null)
             levelText.text = level.ToString("N0");
+        UpdateAimPosition();
         UpdateAnimation();
         UpdateInput();
         // Update dash state
@@ -689,6 +692,13 @@ public class CharacterEntity : BaseNetworkGameCharacter
         inputMove = Vector2.zero;
         inputDirection = Vector2.zero;
         inputAttack = false;
+
+        // Update aim position
+        currentActionIsForLeftHand = CurrentActionIsForLeftHand();
+        Transform launchTransform;
+        GetDamageLaunchTransform(currentActionIsForLeftHand, out launchTransform);
+        aimPosition = launchTransform.position + (CacheTransform.forward * weaponData.damagePrefab.GetAttackRange());
+
         if (inputCancelUsingSkill = InputManager.GetButton("CancelUsingSkill"))
         {
             holdingUseSkillHotkeyId = -1;
@@ -781,6 +791,15 @@ public class CharacterEntity : BaseNetworkGameCharacter
         }
     }
 
+    protected virtual void UpdateAimPosition()
+    {
+        // Update aim position
+        currentActionIsForLeftHand = CurrentActionIsForLeftHand();
+        Transform launchTransform;
+        GetDamageLaunchTransform(currentActionIsForLeftHand, out launchTransform);
+        aimPosition = launchTransform.position + (CacheTransform.forward * weaponData.damagePrefab.GetAttackRange());
+    }
+
     protected virtual void UpdateAnimation()
     {
         if (characterModel == null)
@@ -824,6 +843,23 @@ public class CharacterEntity : BaseNetworkGameCharacter
     protected virtual float GetMoveSpeed()
     {
         return TotalMoveSpeed * GameplayManager.REAL_MOVE_SPEED_RATE;
+    }
+
+    protected virtual bool CurrentActionIsForLeftHand()
+    {
+        if (usingSkillHotkeyId >= 0)
+        {
+            SkillData skillData;
+            if (skills.TryGetValue((sbyte)usingSkillHotkeyId, out skillData))
+                return skillData.attackAnimation.isAnimationForLeftHandWeapon;
+        }
+        else if (attackingActionId >= 0)
+        {
+            AttackAnimation attackAnimation;
+            if (weaponData.AttackAnimations.TryGetValue(attackingActionId, out attackAnimation))
+                return attackAnimation.isAnimationForLeftHandWeapon;
+        }
+        return false;
     }
 
     protected virtual void Move(Vector3 direction)
@@ -937,7 +973,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
                 byte actionId = (byte)attackingActionId;
                 yield return StartCoroutine(PlayAttackAnimationRoutine(attackAnimation, weaponData.attackFx, () =>
                 {
-                    weaponData.Launch(this, actionId);
+                    weaponData.Launch(this, aimPosition, actionId);
                 }));
                 // If player still attacking, random new attacking action id
                 if (PhotonNetwork.IsMasterClient && attackingActionId >= 0 && weaponData != null)
@@ -964,7 +1000,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
                 attackingSpreadDamages = skillData.TotalSpreadDamages;
                 yield return StartCoroutine(PlayAttackAnimationRoutine(skillData.attackAnimation, skillData.attackFx, () =>
                 {
-                    skillData.Launch(this);
+                    skillData.Launch(this, aimPosition);
                 }));
                 attackingDamageEntity = null;
                 attackingSpreadDamages = 0;

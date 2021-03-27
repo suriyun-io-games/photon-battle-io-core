@@ -16,7 +16,7 @@ public class WeaponData : ItemData
     public int weaponAnimId;
     public readonly Dictionary<short, AttackAnimation> AttackAnimations = new Dictionary<short, AttackAnimation>();
 
-    public void Launch(CharacterEntity attacker, byte actionId)
+    public void Launch(CharacterEntity attacker, Vector3 targetPosition, byte actionId)
     {
         if (!attacker)
             return;
@@ -44,12 +44,7 @@ public class WeaponData : ItemData
 
         for (var i = 0; i < spread; ++i)
         {
-            // An transform's rotation, position will be set when set `Attacker`
-            // So don't worry about them before damage entity going to spawn
-            // Velocity also being set when set `Attacker` too.
-            var direction = attacker.CacheTransform.forward;
-
-            var damageEntity = DamageEntity.InstantiateNewEntityByWeapon(GetHashId(), actionId, direction, attacker.photonView.ViewID, addRotationX, addRotationY);
+            var damageEntity = DamageEntity.InstantiateNewEntityByWeapon(GetHashId(), actionId, targetPosition, attacker.photonView.ViewID, addRotationX, addRotationY);
             if (damageEntity)
             {
                 damageEntity.weaponDamage = Mathf.CeilToInt(damage);

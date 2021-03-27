@@ -34,7 +34,7 @@ public class SkillData : ScriptableObject
     public AudioClip[] attackFx;
     public int TotalSpreadDamages { get { return 1 + spreadDamages; } }
 
-    public void Launch(CharacterEntity attacker)
+    public void Launch(CharacterEntity attacker, Vector3 targetPosition)
     {
         if (!attacker)
             return;
@@ -65,12 +65,7 @@ public class SkillData : ScriptableObject
 
         for (var i = 0; i < spread; ++i)
         {
-            // An transform's rotation, position will be set when set `Attacker`
-            // So don't worry about them before damage entity going to spawn
-            // Velocity also being set when set `Attacker` too.
-            var direction = attacker.CacheTransform.forward;
-
-            var damageEntity = DamageEntity.InstantiateNewEntityBySkill(GetHashId(), direction, attacker.photonView.ViewID, addRotationX, addRotationY);
+            var damageEntity = DamageEntity.InstantiateNewEntityBySkill(GetHashId(), targetPosition, attacker.photonView.ViewID, addRotationX, addRotationY);
             if (damageEntity)
             {
                 damageEntity.weaponDamage = Mathf.CeilToInt(damage);

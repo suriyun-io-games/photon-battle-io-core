@@ -117,6 +117,7 @@ public class TrapEntity : MonoBehaviourPunCallbacks
         TriggerredTime[characterViewId] = time;
         if (PhotonNetwork.IsMasterClient)
             character.Hp -= triggeredDamage;
-        EffectEntity.PlayEffect(hitEffectPrefab, character.effectTransform);
+        if (!character.IsHidding)
+            EffectEntity.PlayEffect(hitEffectPrefab, character.effectTransform);
     }
 }

@@ -55,10 +55,11 @@ public class PowerUpEntity : MonoBehaviourPunCallbacks
             return;
 
         var character = other.GetComponent<CharacterEntity>();
-        if (character != null && character.Hp > 0 && !character.IsHidding)
+        if (character != null && character.Hp > 0)
         {
             isDead = true;
-            EffectEntity.PlayEffect(powerUpEffect, character.effectTransform);
+            if (!character.IsHidding)
+                EffectEntity.PlayEffect(powerUpEffect, character.effectTransform);
             if (PhotonNetwork.IsMasterClient)
             {
                 character.Hp += Mathf.CeilToInt(hp * character.TotalHpRecoveryRate);

@@ -350,6 +350,7 @@ public class BRGameplayManager : GameplayManager
         CurrentCountdown = 0;
         SpawnerMoveCountdown = 0;
         isInSpawnableArea = false;
+        BRCharacterEntityExtra.BotSpawnDuration = 0f;
     }
 
     public override bool CanRespawn(CharacterEntity character)

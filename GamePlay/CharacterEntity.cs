@@ -7,6 +7,7 @@ using Photon.Pun;
 using Photon.Realtime;
 
 [RequireComponent(typeof(Rigidbody))]
+[RequireComponent(typeof(CharacterMovement))]
 public class CharacterEntity : BaseNetworkGameCharacter
 {
     public const float DISCONNECT_WHEN_NOT_RESPAWN_DURATION = 60;
@@ -314,7 +315,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
 
     public bool isReady { get; private set; }
     public bool isDead { get; private set; }
-    public bool isGround { get; private set; }
+    public bool isGrounded { get { return CacheCharacterMovement.IsGrounded; } }
     public bool isPlayingAttackAnim { get; private set; }
     public bool isPlayingUseSkillAnim { get; private set; }
     public DamageEntity attackingDamageEntity { get; private set; }
@@ -340,11 +341,14 @@ public class CharacterEntity : BaseNetworkGameCharacter
             var canvases = GetComponentsInChildren<Canvas>();
             foreach (var canvas in canvases)
                 canvas.enabled = !isHidding;
+            var projectors = GetComponentsInChildren<Projector>();
+            foreach (var projector in projectors)
+                projector.enabled = !isHidding;
         }
     }
     public Transform CacheTransform { get; private set; }
     public Rigidbody CacheRigidbody { get; private set; }
-    public Collider CacheCollider { get; private set; }
+    public CharacterMovement CacheCharacterMovement { get; private set; }
 
     public virtual CharacterStats SumAddStats
     {
@@ -513,7 +517,8 @@ public class CharacterEntity : BaseNetworkGameCharacter
         gameObject.layer = GameInstance.Singleton.characterLayer;
         CacheTransform = transform;
         CacheRigidbody = GetComponent<Rigidbody>();
-        CacheCollider = GetComponent<Collider>();
+        CacheRigidbody.useGravity = false;
+        CacheCharacterMovement = gameObject.GetOrAddComponent<CharacterMovement>();
         if (damageLaunchTransform == null)
             damageLaunchTransform = CacheTransform;
         if (effectTransform == null)
@@ -695,7 +700,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
             inputMove = new Vector2(InputManager.GetAxis("Horizontal", false), InputManager.GetAxis("Vertical", false));
             // Jump
             if (!inputJump)
-                inputJump = InputManager.GetButtonDown("Jump") && isGround && !isDashing;
+                inputJump = InputManager.GetButtonDown("Jump") && isGrounded && !isDashing;
             // Attack, Can attack while not dashing
             if (!isDashing)
             {
@@ -761,7 +766,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
             // Dash
             if (!isDashing)
             {
-                isDashing = InputManager.GetButtonDown("Dash") && isGround;
+                isDashing = InputManager.GetButtonDown("Dash") && isGrounded;
                 if (isDashing)
                 {
                     if (isMobileInput)
@@ -823,24 +828,17 @@ public class CharacterEntity : BaseNetworkGameCharacter
 
     protected virtual void Move(Vector3 direction)
     {
-        if (direction.sqrMagnitude > 0)
-        {
-            if (direction.sqrMagnitude > 1)
-                direction = direction.normalized;
-            direction.y = 0;
+        if (direction.sqrMagnitude > 1)
+            direction = direction.normalized;
+        direction.y = 0;
 
-            var targetSpeed = GetMoveSpeed() * (isDashing ? dashMoveSpeedMultiplier : 1f);
-            var targetVelocity = direction * targetSpeed;
-            var rigidbodyVel = CacheRigidbody.velocity;
-            rigidbodyVel.y = 0;
-            if (rigidbodyVel.sqrMagnitude < 1)
-                CacheTransform.position += targetVelocity * Time.deltaTime;
-        }
+        var targetSpeed = GetMoveSpeed() * (isDashing ? dashMoveSpeedMultiplier : 1f);
+        CacheCharacterMovement.UpdateMovement(Time.deltaTime, targetSpeed, direction, inputJump);
     }
 
     protected virtual void UpdateMovements()
     {
-        if (!photonView.IsMine || Hp <= 0)
+        if (!photonView.IsMine)
             return;
 
         var moveDirection = new Vector3(inputMove.x, 0, inputMove.y);
@@ -850,45 +848,25 @@ public class CharacterEntity : BaseNetworkGameCharacter
         // Turn character to move direction
         if (inputDirection.sqrMagnitude <= 0 && inputMove.sqrMagnitude > 0)
             inputDirection = inputMove;
-        Rotate(isDashing ? dashInputMove : inputDirection);
+        if (!IsDead)
+            Rotate(isDashing ? dashInputMove : inputDirection);
 
-        if (inputAttack && GameplayManager.Singleton.CanAttack(this))
-            Attack();
-        else
-            StopAttack();
-
-        if (!inputCancelUsingSkill && releasedUseSkillHotkeyId >= 0 && GameplayManager.Singleton.CanAttack(this))
+        if (!IsDead)
         {
-            UseSkill(releasedUseSkillHotkeyId);
-            holdingUseSkillHotkeyId = -1;
-            releasedUseSkillHotkeyId = -1;
+            if (inputAttack && GameplayManager.Singleton.CanAttack(this))
+                Attack();
+            else
+                StopAttack();
+
+            if (!inputCancelUsingSkill && releasedUseSkillHotkeyId >= 0 && GameplayManager.Singleton.CanAttack(this))
+            {
+                UseSkill(releasedUseSkillHotkeyId);
+                holdingUseSkillHotkeyId = -1;
+                releasedUseSkillHotkeyId = -1;
+            }
         }
 
-        if (isGround && inputJump)
-        {
-            CacheRigidbody.velocity = new Vector3(CacheRigidbody.velocity.x, CalculateJumpVerticalSpeed(), CacheRigidbody.velocity.z);
-            isGround = false;
-            inputJump = false;
-        }
-    }
-
-    protected virtual void OnCollisionEnter(Collision collision)
-    {
-        if (!isGround && collision.impulse.y > 0)
-            isGround = true;
-    }
-
-    protected virtual void OnCollisionStay(Collision collision)
-    {
-        if (!isGround && collision.impulse.y > 0)
-            isGround = true;
-    }
-
-    protected float CalculateJumpVerticalSpeed()
-    {
-        // From the jump height and gravity we deduce the upwards speed 
-        // for the character to reach at the apex.
-        return Mathf.Sqrt(2f * jumpHeight * -Physics.gravity.y);
+        inputJump = false;
     }
 
     protected void Rotate(Vector2 direction)

@@ -55,7 +55,7 @@ public class PowerUpEntity : MonoBehaviourPunCallbacks
             return;
 
         var character = other.GetComponent<CharacterEntity>();
-        if (character != null && character.Hp > 0)
+        if (character != null && character.Hp > 0 && !character.IsHidding)
         {
             isDead = true;
             EffectEntity.PlayEffect(powerUpEffect, character.effectTransform);

@@ -33,7 +33,7 @@ public class PowerUpEntity : MonoBehaviourPunCallbacks
 
     private void Awake()
     {
-        gameObject.layer = Physics.IgnoreRaycastLayer;
+        gameObject.layer = GenericUtils.IgnoreRaycastLayer;
         var collider = GetComponent<Collider>();
         collider.isTrigger = true;
     }
@@ -51,7 +51,7 @@ public class PowerUpEntity : MonoBehaviourPunCallbacks
         if (isDead)
             return;
 
-        if (other.gameObject.layer == Physics.IgnoreRaycastLayer)
+        if (other.gameObject.layer == GenericUtils.IgnoreRaycastLayer)
             return;
 
         var character = other.GetComponent<CharacterEntity>();

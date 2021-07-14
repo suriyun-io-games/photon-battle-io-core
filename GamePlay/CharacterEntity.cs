@@ -44,6 +44,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
     public GameObject[] localPlayerObjects;
     public float dashDuration = 1.5f;
     public float dashMoveSpeedMultiplier = 1.5f;
+    public float returnToMoveDirectionDelay = 1f;
     [Header("UI")]
     public Transform hpBarContainer;
     public Image hpFillImage;
@@ -57,6 +58,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
     public GameObject invincibleEffect;
 
     #region Sync Vars
+    [Header("Online data")]
     protected int _hp;
     protected int _exp;
     protected int _level;
@@ -354,6 +356,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
     protected sbyte releasedUseSkillHotkeyId = -1;
     protected Vector3? previousPosition;
     protected Vector3 currentVelocity;
+    protected float lastActionTime;
 
     public bool isReady { get; private set; }
     public bool isDead { get; private set; }
@@ -933,6 +936,8 @@ public class CharacterEntity : BaseNetworkGameCharacter
                 }
             }
         }
+        if (inputAttack || releasedUseSkillHotkeyId >= 0)
+            lastActionTime = Time.unscaledTime;
     }
 
     protected virtual void UpdateViewMode(bool force = false)
@@ -1076,7 +1081,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
         // Turn character to move direction
         if (inputDirection.magnitude <= 0 && inputMove.magnitude > 0 || viewMode == ViewMode.ThirdPerson)
             inputDirection = inputMove;
-        if (characterModel && characterModel.TempAnimator && characterModel.TempAnimator.GetBool("DoAction") && viewMode == ViewMode.ThirdPerson)
+        if (characterModel && characterModel.TempAnimator && (characterModel.TempAnimator.GetBool("DoAction") || Time.unscaledTime - lastActionTime <= returnToMoveDirectionDelay) && viewMode == ViewMode.ThirdPerson)
             inputDirection = cameraForward;
         if (!IsDead)
             Rotate(isDashing ? dashInputMove : inputDirection);

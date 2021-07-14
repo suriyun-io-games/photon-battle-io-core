@@ -13,7 +13,7 @@ public class MonsterSpawnArea : SpawnArea
     {
         for (int i = 0; i < amount; ++i)
         {
-            PhotonNetwork.InstantiateSceneObject(monsterPrefab.name, GetSpawnPosition(), Quaternion.identity, 0, new object[0]);
+            PhotonNetwork.InstantiateRoomObject(monsterPrefab.name, GetSpawnPosition(), Quaternion.identity, 0, new object[0]);
         }
     }
 }

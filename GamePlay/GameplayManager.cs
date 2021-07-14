@@ -102,7 +102,7 @@ public class GameplayManager : MonoBehaviourPunCallbacks
         PowerUpEntity powerUpPrefab;
         if (powerUpEntities.TryGetValue(prefabName, out powerUpPrefab))
         {
-            var powerUpEntityGo = PhotonNetwork.InstantiateSceneObject(powerUpPrefab.name, GetPowerUpSpawnPosition(), Quaternion.identity, 0, new object[0]);
+            var powerUpEntityGo = PhotonNetwork.InstantiateRoomObject(powerUpPrefab.name, GetPowerUpSpawnPosition(), Quaternion.identity, 0, new object[0]);
             var powerUpEntity = powerUpEntityGo.GetComponent<PowerUpEntity>();
             powerUpEntity.prefabName = prefabName;
         }

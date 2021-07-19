@@ -45,6 +45,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
     public float dashDuration = 1.5f;
     public float dashMoveSpeedMultiplier = 1.5f;
     public float returnToMoveDirectionDelay = 1f;
+    public float endActionDelay = 0.75f;
     [Header("UI")]
     public Transform hpBarContainer;
     public Image hpFillImage;
@@ -357,6 +358,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
     protected Vector3? previousPosition;
     protected Vector3 currentVelocity;
     protected float lastActionTime;
+    protected Coroutine endActionDelayCoroutine;
 
     public bool isReady { get; private set; }
     public bool isDead { get; private set; }
@@ -1210,11 +1212,12 @@ public class CharacterEntity : BaseNetworkGameCharacter
         var animator = characterModel.TempAnimator;
         if (animator != null && attackAnimation != null)
         {
+            if (endActionDelayCoroutine != null)
+                StopCoroutine(endActionDelayCoroutine);
             // Play attack animation
-            animator.SetBool("DoAction", false);
-            yield return new WaitForEndOfFrame();
-            animator.SetBool("DoAction", true);
-            animator.SetInteger("ActionID", attackAnimation.actionId);
+            characterModel.TempAnimator.SetBool("DoAction", true);
+            characterModel.TempAnimator.SetInteger("ActionID", attackAnimation.actionId);
+            characterModel.TempAnimator.Play(0, 1, 0);
 
             // Wait to launch damage entity
             var speed = attackAnimation.speed;
@@ -1234,8 +1237,15 @@ public class CharacterEntity : BaseNetworkGameCharacter
             yield return new WaitForSeconds((animationDuration - launchDuration) / speed);
 
             // Attack animation ended
-            animator.SetBool("DoAction", false);
+            endActionDelayCoroutine = StartCoroutine(DelayEndAction(endActionDelay));
         }
+    }
+
+    IEnumerator DelayEndAction(float delay)
+    {
+        if (delay > 0f)
+            yield return new WaitForSeconds(delay);
+        characterModel.TempAnimator.SetBool("DoAction", false);
     }
 
     public virtual bool ReceiveDamage(CharacterEntity attacker, int damage)

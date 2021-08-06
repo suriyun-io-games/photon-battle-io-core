@@ -8,7 +8,7 @@ public class SyncBotNameRpcComponent : BaseSyncVarRpcComponent<string>
     }
 
     [PunRPC]
-    protected virtual void RpcUpdateExtra(string value)
+    protected virtual void RpcUpdateBotName(string value)
     {
         _value = value;
     }

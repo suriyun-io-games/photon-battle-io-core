@@ -1,8 +1,7 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 using Photon.Pun;
-using Photon.Pun.UtilityScripts;
 
 public class GameplayManager : MonoBehaviourPunCallbacks
 {
@@ -21,11 +20,18 @@ public class GameplayManager : MonoBehaviourPunCallbacks
     public IntAttribute rewardExp = new IntAttribute() { minValue = 8, maxValue = 409220, growth = 2.5f };
     public RewardCurrency[] rewardCurrencies;
     public IntAttribute killScore = new IntAttribute() { minValue = 10, maxValue = 511525, growth = 1f };
-    public int minHp = 100;
-    public int minAttack = 30;
-    public int minDefend = 20;
-    public int minDamage = 1;
-    public int minMoveSpeed = 30;
+    [FormerlySerializedAs("minHp")]
+    public int baseHp = 100;
+    [FormerlySerializedAs("minAttack")]
+    public int baseAttack = 30;
+    [FormerlySerializedAs("minDefend")]
+    public int baseDefend = 20;
+    [FormerlySerializedAs("minDamage")]
+    public int baseDamage = 1;
+    [FormerlySerializedAs("minMoveSpeed")]
+    public int baseMoveSpeed = 30;
+    public float baseBlockReduceDamageRate = 0.3f;
+    public float maxBlockReduceDamageRate = 0.6f;
     public int maxSpreadDamages = 6;
     public bool divideSpreadedDamageAmount = false;
     public int addingStatPoint = 1;
@@ -41,8 +47,8 @@ public class GameplayManager : MonoBehaviourPunCallbacks
     public SpawnArea[] characterSpawnAreasForTeamB;
     public SpawnArea[] powerUpSpawnAreas;
     public PowerUpSpawnData[] powerUps;
-    public readonly Dictionary<string, PowerUpEntity> powerUpEntities = new Dictionary<string, PowerUpEntity>();
-    public readonly Dictionary<string, CharacterAttributes> attributes = new Dictionary<string, CharacterAttributes>();
+    public readonly Dictionary<string, PowerUpEntity> PowerUpEntities = new Dictionary<string, PowerUpEntity>();
+    public readonly Dictionary<int, CharacterAttributes> Attributes = new Dictionary<int, CharacterAttributes>();
 
     protected virtual void Awake()
     {
@@ -53,17 +59,17 @@ public class GameplayManager : MonoBehaviourPunCallbacks
         }
         Singleton = this;
 
-        powerUpEntities.Clear();
+        PowerUpEntities.Clear();
         foreach (var powerUp in powerUps)
         {
             var powerUpPrefab = powerUp.powerUpPrefab;
-            if (powerUpPrefab != null && !powerUpEntities.ContainsKey(powerUpPrefab.name))
-                powerUpEntities.Add(powerUpPrefab.name, powerUpPrefab);
+            if (powerUpPrefab != null && !PowerUpEntities.ContainsKey(powerUpPrefab.name))
+                PowerUpEntities.Add(powerUpPrefab.name, powerUpPrefab);
         }
-        attributes.Clear();
+        Attributes.Clear();
         foreach (var availableAttribute in availableAttributes)
         {
-            attributes[availableAttribute.name] = availableAttribute;
+            Attributes[availableAttribute.GetHashId()] = availableAttribute;
         }
         // Set unique view id
         PhotonView view = GetComponent<PhotonView>();
@@ -100,7 +106,7 @@ public class GameplayManager : MonoBehaviourPunCallbacks
         if (!PhotonNetwork.IsMasterClient || string.IsNullOrEmpty(prefabName))
             return;
         PowerUpEntity powerUpPrefab;
-        if (powerUpEntities.TryGetValue(prefabName, out powerUpPrefab))
+        if (PowerUpEntities.TryGetValue(prefabName, out powerUpPrefab))
         {
             var powerUpEntityGo = PhotonNetwork.InstantiateRoomObject(powerUpPrefab.name, GetPowerUpSpawnPosition(), Quaternion.identity, 0, new object[0]);
             var powerUpEntity = powerUpEntityGo.GetComponent<PowerUpEntity>();
@@ -112,12 +118,12 @@ public class GameplayManager : MonoBehaviourPunCallbacks
     {
         // TODO: Improve team codes
 
-        if (character.playerTeam == 1 && 
+        if (character.PlayerTeam == 1 && 
             characterSpawnAreasForTeamA != null &&
             characterSpawnAreasForTeamA.Length > 0)
             return characterSpawnAreasForTeamA[Random.Range(0, characterSpawnAreasForTeamA.Length)].GetSpawnPosition();
 
-        if (character.playerTeam == 2 &&
+        if (character.PlayerTeam == 2 &&
             characterSpawnAreasForTeamB != null &&
             characterSpawnAreasForTeamB.Length > 0)
             return characterSpawnAreasForTeamB[Random.Range(0, characterSpawnAreasForTeamB.Length)].GetSpawnPosition();
@@ -166,7 +172,7 @@ public class GameplayManager : MonoBehaviourPunCallbacks
         if (networkGameplayManager != null)
         {
             if (networkGameplayManager.gameRule != null && networkGameplayManager.gameRule.IsTeamGameplay && attacker)
-                return damageReceiver.playerTeam != attacker.playerTeam;
+                return damageReceiver.PlayerTeam != attacker.PlayerTeam;
             if (networkGameplayManager.IsMatchEnded)
                 return false;
         }

@@ -7,6 +7,8 @@ using System.Linq;
 using UnityEngine.Serialization;
 using UnityEngine.AI;
 
+
+[RequireComponent(typeof(SyncBotNameRpcComponent))]
 public class MonsterEntity : CharacterEntity
 {
     public enum Characteristic
@@ -15,21 +17,14 @@ public class MonsterEntity : CharacterEntity
         NoneAttack,
         NoneAggressive,
     }
-    protected string monsterPlayerName;
-    public override string playerName
+    private SyncBotNameRpcComponent syncBotName = null;
+    public override string PlayerName
     {
-        get { return monsterPlayerName; }
-        set
-        {
-            if (PhotonNetwork.IsMasterClient)
-            {
-                monsterPlayerName = value;
-                photonView.OthersRPC(RpcUpdateMonsterName, value);
-            }
-        }
+        get { return syncBotName.Value; }
+        set { syncBotName.Value = value; }
     }
 
-    public override byte playerTeam
+    public override byte PlayerTeam
     {
         get { return 0; }
         set { }
@@ -76,8 +71,8 @@ public class MonsterEntity : CharacterEntity
 
     public override int Exp
     {
-        get { return exp; }
-        set { }
+        get { return base.Exp; }
+        set { /* Monster cannot level up */ }
     }
 
     public override CharacterStats SumAddStats
@@ -148,31 +143,14 @@ public class MonsterEntity : CharacterEntity
 
         if (PhotonNetwork.IsMasterClient)
         {
-            playerName = monsterName;
-            level = monsterLevel;
+            PlayerName = monsterName;
+            Level = monsterLevel;
             lastUpdateMovementTime = Time.unscaledTime - updateMovementDuration;
             lastAttackTime = Time.unscaledTime - attackDuration;
             ServerSpawn(false);
         }
 
         UpdateSkills();
-    }
-
-    protected override void SyncData()
-    {
-        if (!PhotonNetwork.IsMasterClient)
-            return;
-        base.SyncData();
-        photonView.OthersRPC(RpcUpdateMonsterName, monsterPlayerName);
-    }
-
-
-    public override void OnPlayerEnteredRoom(Player newPlayer)
-    {
-        if (!PhotonNetwork.IsMasterClient)
-            return;
-        base.OnPlayerEnteredRoom(newPlayer);
-        photonView.TargetRPC(RpcUpdateMonsterName, newPlayer, monsterPlayerName);
     }
 
     protected override void SetLocalPlayer()
@@ -190,20 +168,17 @@ public class MonsterEntity : CharacterEntity
         // Override base function to changes functionality, to do nothing
     }
 
-    [PunRPC]
-    protected override void RpcUpdateSelectCharacter(int value)
+    public override void OnUpdateSelectCharacter(int value)
     {
         // Override base function to changes functionality, to do nothing
     }
 
-    [PunRPC]
-    protected override void RpcUpdateSelectHead(int value)
+    public override void OnUpdateSelectHead(int value)
     {
         // Override base function to changes functionality, to do nothing
     }
 
-    [PunRPC]
-    protected override void RpcUpdateSelectWeapon(int value)
+    public override void OnUpdateSelectWeapon(int value)
     {
         // Override base function to changes functionality, to do nothing
     }
@@ -277,7 +252,7 @@ public class MonsterEntity : CharacterEntity
             lookingPosition = enemy.CacheTransform.position;
         }
 
-        attackingActionId = -1;
+        AttackingActionId = -1;
         if (enemy != null)
         {
             switch (characteristic)
@@ -291,10 +266,10 @@ public class MonsterEntity : CharacterEntity
                         sbyte usingSkillHotkeyId;
                         if (RandomUseSkill(out usingSkillHotkeyId))
                         {
-                            this.usingSkillHotkeyId = usingSkillHotkeyId;
+                            UsingSkillHotkeyId = usingSkillHotkeyId;
                         }
                         else
-                            attackingActionId = weaponData.GetRandomAttackAnimation().actionId;
+                            AttackingActionId = weaponData.GetRandomAttackAnimation().actionId;
                         lastAttackTime = Time.unscaledTime;
                     }
                     break;
@@ -435,7 +410,7 @@ public class MonsterEntity : CharacterEntity
     {
         base.OnSpawn();
         weaponData = monsterWeaponData;
-        level = monsterLevel;
+        Level = monsterLevel;
         UpdateSkills();
     }
 
@@ -449,17 +424,11 @@ public class MonsterEntity : CharacterEntity
 
     public override bool CanRespawn(params object[] extraParams)
     {
-        return Time.unscaledTime - deathTime >= respawnDuration;
+        return Time.unscaledTime - DeathTime >= respawnDuration;
     }
 
     public override Vector3 GetSpawnPosition()
     {
         return spawnPosition;
-    }
-
-    [PunRPC]
-    protected void RpcUpdateMonsterName(string name)
-    {
-        monsterPlayerName = name;
     }
 }

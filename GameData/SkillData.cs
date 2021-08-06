@@ -51,7 +51,7 @@ public class SkillData : ScriptableObject
         var damage = (float)attacker.TotalAttack + increaseDamage + (attacker.TotalAttack * increaseDamageByRate);
         damage += Random.Range(GameplayManager.Singleton.minAttackVaryRate, GameplayManager.Singleton.maxAttackVaryRate) * damage;
         if (damage <= 0f)
-            damage = GameplayManager.Singleton.minDamage;
+            damage = GameplayManager.Singleton.baseDamage;
 
         var addRotationX = 0f;
         var addRotationY = 0f;

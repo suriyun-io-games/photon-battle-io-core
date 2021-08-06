@@ -18,7 +18,7 @@ public class AttackSignal : MonoBehaviour
         if (!characterEntity)
             return;
 
-        var spread = characterEntity.attackingSpreadDamages;
+        var spread = characterEntity.AttackingSpreadDamages;
         var eulerAngles = Vector3.zero;
         var addRotationZ = 0f;
         var addingRotationZ = 360f / spread;
@@ -37,9 +37,9 @@ public class AttackSignal : MonoBehaviour
                 signalObject.gameObject.SetActive(false);
                 continue;
             }
-            signalObject.gameObject.SetActive((characterEntity.isPlayingAttackAnim || characterEntity.isPlayingUseSkillAnim || characterEntity.attackingDamageEntity) && characterEntity == BaseNetworkGameCharacter.Local);
+            signalObject.gameObject.SetActive((characterEntity.IsPlayingAttackAnim || characterEntity.IsPlayingUseSkillAnim || characterEntity.AttackingDamageEntity) && characterEntity == BaseNetworkGameCharacter.Local);
             if (signalObject.gameObject.activeSelf)
-                signalObject.sizeDelta = new Vector2(characterEntity.attackingDamageEntity.radius, characterEntity.attackingDamageEntity.GetAttackRange()) * sizeMultiplier;
+                signalObject.sizeDelta = new Vector2(characterEntity.AttackingDamageEntity.radius, characterEntity.AttackingDamageEntity.GetAttackRange()) * sizeMultiplier;
             eulerAngles.z = addRotationZ;
             signalObject.localEulerAngles = eulerAngles;
             addRotationZ += addingRotationZ;

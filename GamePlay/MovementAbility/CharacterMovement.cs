@@ -200,7 +200,7 @@ public class CharacterMovement : MonoBehaviour
             tempTargetPosition = tempCurrentPosition + tempMoveDirection;
         }
 
-        if (CacheEntity.isDead)
+        if (CacheEntity.IsDeadMarked)
         {
             tempMoveDirection = Vector3.zero;
             isJumping = false;

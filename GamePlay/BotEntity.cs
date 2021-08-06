@@ -4,9 +4,9 @@ using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Serialization;
 using Photon.Pun;
-using Photon.Realtime;
 using System.Linq;
 
+[RequireComponent(typeof(SyncBotNameRpcComponent))]
 public class BotEntity : CharacterEntity
 {
     public enum Characteristic
@@ -14,23 +14,30 @@ public class BotEntity : CharacterEntity
         Aggressive,
         NoneAttack
     }
-    protected string botPlayerName;
-    public override string playerName
+    private SyncBotNameRpcComponent syncBotName = null;
+    public override string PlayerName
     {
-        get { return botPlayerName; }
-        set
-        {
-            if (PhotonNetwork.IsMasterClient)
-            {
-                botPlayerName = value;
-                photonView.OthersRPC(RpcUpdateBotName, value);
-            }
-        }
+        get { return syncBotName.Value; }
+        set { syncBotName.Value = value; }
     }
 
     public override bool IsBot
     {
         get { return true; }
+    }
+
+    public override CharacterStats SumAddStats
+    {
+        get
+        {
+            if (refreshingSumAddStats)
+            {
+                CharacterStats addStats = base.SumAddStats;
+                addStats += startAddStats;
+                sumAddStats = addStats;
+            }
+            return sumAddStats;
+        }
     }
 
     public const float ReachedTargetDistance = 0.1f;
@@ -79,22 +86,6 @@ public class BotEntity : CharacterEntity
             dashingTime = Time.unscaledTime;
             randomDashDuration = dashDuration + Random.Range(randomDashDurationMin, randomDashDurationMax);
         }
-    }
-
-    protected override void SyncData()
-    {
-        if (!PhotonNetwork.IsMasterClient)
-            return;
-        base.SyncData();
-        photonView.OthersRPC(RpcUpdateBotName, botPlayerName);
-    }
-
-    public override void OnPlayerEnteredRoom(Player newPlayer)
-    {
-        if (!PhotonNetwork.IsMasterClient)
-            return;
-        base.OnPlayerEnteredRoom(newPlayer);
-        photonView.TargetRPC(RpcUpdateBotName, newPlayer, botPlayerName);
     }
 
     // Override to do nothing
@@ -178,7 +169,7 @@ public class BotEntity : CharacterEntity
             lookingPosition = enemy.CacheTransform.position;
         }
 
-        attackingActionId = -1;
+        AttackingActionId = -1;
         if (enemy != null)
         {
             switch (characteristic)
@@ -190,9 +181,9 @@ public class BotEntity : CharacterEntity
                         // Attack when nearby enemy
                         sbyte usingSkillHotkeyId;
                         if (RandomUseSkill(out usingSkillHotkeyId))
-                            this.usingSkillHotkeyId = usingSkillHotkeyId;
+                            UsingSkillHotkeyId = usingSkillHotkeyId;
                         else
-                            attackingActionId = weaponData.GetRandomAttackAnimation().actionId;
+                            AttackingActionId = weaponData.GetRandomAttackAnimation().actionId;
                         lastAttackTime = Time.unscaledTime;
                     }
                     break;
@@ -200,13 +191,13 @@ public class BotEntity : CharacterEntity
         }
 
         // Dashing
-        if (Time.unscaledTime - dashingTime >= randomDashDuration && !isDashing)
+        if (Time.unscaledTime - dashingTime >= randomDashDuration && !IsDashing)
         {
             randomDashDuration = dashDuration + Random.Range(randomDashDurationMin, randomDashDurationMax);
             dashDirection = CacheTransform.forward;
             dashDirection.y = 0;
             dashDirection.Normalize();
-            isDashing = true;
+            IsDashing = true;
             dashingTime = Time.unscaledTime;
             CmdDash();
         }
@@ -215,7 +206,7 @@ public class BotEntity : CharacterEntity
         isReachedTarget = IsReachedTargetPosition();
         if (!isReachedTarget)
         {
-            Move(isDashing ? dashDirection : (targetPosition - CacheTransform.position).normalized);
+            Move(IsDashing ? dashDirection : (targetPosition - CacheTransform.position).normalized);
         }
 
         if (isReachedTarget)
@@ -279,15 +270,15 @@ public class BotEntity : CharacterEntity
 
     private void UpdateStatPoint()
     {
-        if (statPoint <= 0)
+        if (StatPoint <= 0)
             return;
         var dict = new Dictionary<CharacterAttributes, int>();
-        var list = GameplayManager.Singleton.attributes.Values.ToList();
+        var list = GameplayManager.Singleton.Attributes.Values.ToList();
         foreach (var entry in list)
         {
             dict.Add(entry, entry.randomWeight);
         }
-        CmdAddAttribute(WeightedRandomizer.From(dict).TakeOne().name);
+        CmdAddAttribute(WeightedRandomizer.From(dict).TakeOne().GetHashId());
     }
 
     private bool RandomUseSkill(out sbyte hotkeyId)
@@ -354,7 +345,6 @@ public class BotEntity : CharacterEntity
     public override void OnSpawn()
     {
         base.OnSpawn();
-        addStats += startAddStats;
         Hp = TotalHp;
     }
 
@@ -364,11 +354,5 @@ public class BotEntity : CharacterEntity
         if (range < minimumAttackRange)
             return minimumAttackRange;
         return range;
-    }
-
-    [PunRPC]
-    protected void RpcUpdateBotName(string name)
-    {
-        botPlayerName = name;
     }
 }

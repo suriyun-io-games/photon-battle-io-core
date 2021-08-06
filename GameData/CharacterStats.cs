@@ -10,6 +10,7 @@ public struct CharacterStats
     public float addExpRate;
     public float addScoreRate;
     public float addHpRecoveryRate;
+    public float addBlockReduceDamageRate;
     public float addDamageRateLeechHp;
     public int addSpreadDamages;
     public float increaseDamageRate;
@@ -25,6 +26,7 @@ public struct CharacterStats
         result.addExpRate = a.addExpRate + b.addExpRate;
         result.addScoreRate = a.addScoreRate + b.addScoreRate;
         result.addHpRecoveryRate = a.addHpRecoveryRate + b.addHpRecoveryRate;
+        result.addBlockReduceDamageRate = a.addBlockReduceDamageRate + b.addBlockReduceDamageRate;
         result.addDamageRateLeechHp = a.addDamageRateLeechHp + b.addDamageRateLeechHp;
         result.addSpreadDamages = a.addSpreadDamages + b.addSpreadDamages;
         result.increaseDamageRate = a.increaseDamageRate + b.increaseDamageRate;
@@ -42,6 +44,7 @@ public struct CharacterStats
         result.addExpRate = a.addExpRate - b.addExpRate;
         result.addScoreRate = a.addScoreRate - b.addScoreRate;
         result.addHpRecoveryRate = a.addHpRecoveryRate - b.addHpRecoveryRate;
+        result.addBlockReduceDamageRate = a.addBlockReduceDamageRate - b.addBlockReduceDamageRate;
         result.addDamageRateLeechHp = a.addDamageRateLeechHp - b.addDamageRateLeechHp;
         result.addSpreadDamages = a.addSpreadDamages - b.addSpreadDamages;
         result.increaseDamageRate = a.increaseDamageRate - b.increaseDamageRate;
@@ -49,10 +52,31 @@ public struct CharacterStats
         return result;
     }
 
+    public static CharacterStats operator *(CharacterStats a, short b)
+    {
+        var result = new CharacterStats();
+        result.addHp = a.addHp * b;
+        result.addAttack = a.addAttack * b;
+        result.addDefend = a.addDefend * b;
+        result.addMoveSpeed = a.addMoveSpeed * b;
+        result.addExpRate = a.addExpRate * b;
+        result.addScoreRate = a.addScoreRate * b;
+        result.addHpRecoveryRate = a.addHpRecoveryRate * b;
+        result.addBlockReduceDamageRate = a.addBlockReduceDamageRate * b;
+        result.addDamageRateLeechHp = a.addDamageRateLeechHp * b;
+        result.addSpreadDamages = a.addSpreadDamages * b;
+        result.increaseDamageRate = a.increaseDamageRate * b;
+        result.reduceReceiveDamageRate = a.reduceReceiveDamageRate * b;
+        return result;
+    }
+
+    private const int IntSize = sizeof(int);
+    private const int FloatSize = sizeof(float);
+    private const int writeBytesSize = (IntSize * 5) + (FloatSize * 7);
+    private static readonly byte[] writeBytes = new byte[writeBytesSize];
     public static byte[] SerializeMethod(object customobject)
     {
         CharacterStats data = (CharacterStats)customobject;
-        byte[] writeBytes = new byte[11 * 5];
         int index = 0;
         Protocol.Serialize(data.addHp, writeBytes, ref index);
         Protocol.Serialize(data.addAttack, writeBytes, ref index);
@@ -61,6 +85,7 @@ public struct CharacterStats
         Protocol.Serialize(data.addExpRate, writeBytes, ref index);
         Protocol.Serialize(data.addScoreRate, writeBytes, ref index);
         Protocol.Serialize(data.addHpRecoveryRate, writeBytes, ref index);
+        Protocol.Serialize(data.addBlockReduceDamageRate, writeBytes, ref index);
         Protocol.Serialize(data.addDamageRateLeechHp, writeBytes, ref index);
         Protocol.Serialize(data.addSpreadDamages, writeBytes, ref index);
         Protocol.Serialize(data.increaseDamageRate, writeBytes, ref index);
@@ -88,6 +113,8 @@ public struct CharacterStats
         data.addScoreRate = tempFloat;
         Protocol.Deserialize(out tempFloat, readBytes, ref index);
         data.addHpRecoveryRate = tempFloat;
+        Protocol.Deserialize(out tempFloat, readBytes, ref index);
+        data.addBlockReduceDamageRate = tempFloat;
         Protocol.Deserialize(out tempFloat, readBytes, ref index);
         data.addDamageRateLeechHp = tempFloat;
         Protocol.Deserialize(out tempInt, readBytes, ref index);

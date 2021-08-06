@@ -30,33 +30,33 @@ public class IONetworkGameRule : BaseNetworkGameRule
         // Set character data
         var botGo = PhotonNetwork.InstantiateRoomObject(botPrefab.name, Vector3.zero, Quaternion.identity, 0, new object[0]);
         var botEntity = botGo.GetComponent<BotEntity>();
-        botEntity.playerName = bot.name;
-        botEntity.selectHead = bot.GetSelectHead();
-        botEntity.selectCharacter = bot.GetSelectCharacter();
+        botEntity.PlayerName = bot.name;
+        botEntity.SelectHead = bot.GetSelectHead();
+        botEntity.SelectCharacter = bot.GetSelectCharacter();
         if (startWeapon != null)
-            botEntity.selectWeapon = startWeapon.GetHashId();
+            botEntity.SelectWeapon = startWeapon.GetHashId();
         else
-            botEntity.selectWeapon = bot.GetSelectWeapon();
+            botEntity.SelectWeapon = bot.GetSelectWeapon();
         return botEntity;
     }
 
     public virtual void NewPlayer(CharacterEntity character, int selectHead, int selectCharacter, int selectWeapon, int[] selectCustomEquipments, string extra)
     {
-        character.selectHead = selectHead;
-        character.selectCharacter = selectCharacter;
+        character.SelectHead = selectHead;
+        character.SelectCharacter = selectCharacter;
         if (startWeapon != null)
-            character.selectWeapon = startWeapon.GetHashId();
+            character.SelectWeapon = startWeapon.GetHashId();
         else
-            character.selectWeapon = selectWeapon;
-        character.selectCustomEquipments = selectCustomEquipments;
-        character.extra = extra;
+            character.SelectWeapon = selectWeapon;
+        character.SelectCustomEquipments = selectCustomEquipments;
+        character.Extra = extra;
     }
 
     public override bool CanCharacterRespawn(BaseNetworkGameCharacter character, params object[] extraParams)
     {
         var gameplayManager = GameplayManager.Singleton;
         var targetCharacter = character as CharacterEntity;
-        return gameplayManager.CanRespawn(targetCharacter) && Time.unscaledTime - targetCharacter.deathTime >= gameplayManager.respawnDuration;
+        return gameplayManager.CanRespawn(targetCharacter) && Time.unscaledTime - targetCharacter.DeathTime >= gameplayManager.respawnDuration;
     }
 
     public override bool RespawnCharacter(BaseNetworkGameCharacter character, params object[] extraParams)
@@ -68,19 +68,19 @@ public class IONetworkGameRule : BaseNetworkGameRule
         var targetCharacter = character as CharacterEntity;
         var gameplayManager = GameplayManager.Singleton;
         // For IO Modes, character stats will be reset when dead
-        if (!isWatchedAds || targetCharacter.watchAdsCount >= gameplayManager.watchAdsRespawnAvailable)
+        if (!isWatchedAds || targetCharacter.WatchAdsCount >= gameplayManager.watchAdsRespawnAvailable)
         {
             targetCharacter.ResetScore();
             targetCharacter.ResetKillCount();
             targetCharacter.ResetAssistCount();
             targetCharacter.Exp = 0;
-            targetCharacter.level = 1;
-            targetCharacter.statPoint = 0;
-            targetCharacter.watchAdsCount = 0;
-            targetCharacter.addStats = new CharacterStats();
+            targetCharacter.Level = 1;
+            targetCharacter.StatPoint = 0;
+            targetCharacter.WatchAdsCount = 0;
+            targetCharacter.AttributeAmounts = new AttributeAmounts(0);
         }
         else
-            ++targetCharacter.watchAdsCount;
+            ++targetCharacter.WatchAdsCount;
 
         return true;
     }

@@ -52,6 +52,7 @@ public class GameNetworkManager : BaseNetworkGameManager
     {
         base.Awake();
         PhotonPeer.RegisterType(typeof(CharacterStats), 0, CharacterStats.SerializeMethod, CharacterStats.DeserializeMethod);
+        PhotonPeer.RegisterType(typeof(AttributeAmounts), 1, AttributeAmounts.SerializeMethod, AttributeAmounts.DeserializeMethod);
     }
 
     protected override void UpdateScores(NetworkGameScore[] scores)

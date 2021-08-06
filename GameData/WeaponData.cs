@@ -30,7 +30,7 @@ public class WeaponData : ItemData
         if (GameplayManager.Singleton.divideSpreadedDamageAmount)
             damage /= spread;
         if (damage <= 0f)
-            damage = GameplayManager.Singleton.minDamage;
+            damage = GameplayManager.Singleton.baseDamage;
 
         var addRotationX = 0f;
         var addRotationY = 0f;

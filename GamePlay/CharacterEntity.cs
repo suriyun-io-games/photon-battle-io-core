@@ -8,6 +8,20 @@ using Photon.Realtime;
 
 [RequireComponent(typeof(Rigidbody))]
 [RequireComponent(typeof(CharacterMovement))]
+[RequireComponent(typeof(CharacterAction))]
+[RequireComponent(typeof(SyncHpRpcComponent))]
+[RequireComponent(typeof(SyncExpRpcComponent))]
+[RequireComponent(typeof(SyncLevelRpcComponent))]
+[RequireComponent(typeof(SyncStatPointRpcComponent))]
+[RequireComponent(typeof(SyncWatchAdsCountRpcComponent))]
+[RequireComponent(typeof(SyncSelectCharacterRpcComponent))]
+[RequireComponent(typeof(SyncSelectHeadRpcComponent))]
+[RequireComponent(typeof(SyncSelectWeaponRpcComponent))]
+[RequireComponent(typeof(SyncSelectCustomEquipmentsRpcComponent))]
+[RequireComponent(typeof(SyncIsInvincibleRpcComponent))]
+[RequireComponent(typeof(SyncAttributeAmountsRpcComponent))]
+[RequireComponent(typeof(SyncExtraRpcComponent))]
+[RequireComponent(typeof(SyncDefaultSelectWeaponRpcComponent))]
 public class CharacterEntity : BaseNetworkGameCharacter
 {
     public const float DISCONNECT_WHEN_NOT_RESPAWN_DURATION = 60;
@@ -44,6 +58,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
     public GameObject[] localPlayerObjects;
     public float dashDuration = 1.5f;
     public float dashMoveSpeedMultiplier = 1.5f;
+    public float blockMoveSpeedMultiplier = 0.75f;
     public float returnToMoveDirectionDelay = 1f;
     public float endActionDelay = 0.75f;
     [Header("UI")]
@@ -59,39 +74,10 @@ public class CharacterEntity : BaseNetworkGameCharacter
     public GameObject invincibleEffect;
 
     #region Sync Vars
-    [Header("Online data")]
-    protected int _hp;
-    protected int _exp;
-    protected int _level;
-    protected int _statPoint;
-    protected int _watchAdsCount;
-    protected int _selectCharacter;
-    protected int _selectHead;
-    protected int _selectWeapon;
-    protected int[] _selectCustomEquipments;
-    protected bool _isInvincible;
-    protected short _attackingActionId = -1;
-    protected short _usingSkillHotkeyId = -1;
-    protected CharacterStats _addStats;
-    protected string _extra;
-    protected int _defaultSelectWeapon;
-    protected Vector3 _aimPosition;
-
-    public virtual int hp
-    {
-        get { return _hp; }
-        set
-        {
-            if (PhotonNetwork.IsMasterClient && value != hp)
-            {
-                _hp = value;
-                photonView.OthersRPC(RpcUpdateHp, value);
-            }
-        }
-    }
+    private SyncHpRpcComponent syncHp = null;
     public int Hp
     {
-        get { return hp; }
+        get { return syncHp.Value; }
         set
         {
             if (!PhotonNetwork.IsMasterClient)
@@ -100,34 +86,26 @@ public class CharacterEntity : BaseNetworkGameCharacter
             if (value <= 0)
             {
                 value = 0;
-                if (!isDead)
+                if (!IsDeadMarked)
                 {
                     photonView.TargetRPC(RpcTargetDead, photonView.Owner);
-                    deathTime = Time.unscaledTime;
-                    ++dieCount;
-                    isDead = true;
+                    DeathTime = Time.unscaledTime;
+                    ++syncDieCount.Value;
+                    IsDeadMarked = true;
                 }
             }
+
             if (value > TotalHp)
                 value = TotalHp;
-            hp = value;
+
+            syncHp.Value = value;
         }
     }
-    public virtual int exp
-    {
-        get { return _exp; }
-        set
-        {
-            if (PhotonNetwork.IsMasterClient && value != exp)
-            {
-                _exp = value;
-                photonView.OthersRPC(RpcUpdateExp, value);
-            }
-        }
-    }
+
+    private SyncExpRpcComponent syncExp = null;
     public virtual int Exp
     {
-        get { return exp; }
+        get { return syncExp.Value; }
         set
         {
             if (!PhotonNetwork.IsMasterClient)
@@ -136,193 +114,80 @@ public class CharacterEntity : BaseNetworkGameCharacter
             var gameplayManager = GameplayManager.Singleton;
             while (true)
             {
-                if (level == gameplayManager.maxLevel)
+                if (Level == gameplayManager.maxLevel)
                     break;
 
-                var currentExp = gameplayManager.GetExp(level);
+                var currentExp = gameplayManager.GetExp(Level);
                 if (value < currentExp)
                     break;
                 var remainExp = value - currentExp;
                 value = remainExp;
-                ++level;
-                statPoint += gameplayManager.addingStatPoint;
+                ++Level;
+                StatPoint += gameplayManager.addingStatPoint;
             }
-            exp = value;
+
+            syncExp.Value = value;
         }
     }
-    public virtual int level
+
+    private SyncLevelRpcComponent syncLevel = null;
+    public int Level { get { return syncLevel.Value; } set { syncLevel.Value = value; } }
+
+    private SyncStatPointRpcComponent syncStatPoint = null;
+    public int StatPoint { get { return syncStatPoint.Value; } set { syncStatPoint.Value = value; } }
+
+    private SyncWatchAdsCountRpcComponent syncWatchAdsCount = null;
+    public byte WatchAdsCount { get { return syncWatchAdsCount.Value; } set { syncWatchAdsCount.Value = value; } }
+
+    private SyncSelectCharacterRpcComponent syncSelectCharacter = null;
+    public int SelectCharacter { get { return syncSelectCharacter.Value; } set { syncSelectCharacter.Value = value; } }
+
+    private SyncSelectHeadRpcComponent syncSelectHead = null;
+    public int SelectHead { get { return syncSelectHead.Value; } set { syncSelectHead.Value = value; } }
+
+    private SyncSelectWeaponRpcComponent syncSelectWeapon = null;
+    public int SelectWeapon { get { return syncSelectWeapon.Value; } set { syncSelectWeapon.Value = value; } }
+
+    private SyncSelectCustomEquipmentsRpcComponent syncSelectCustomEquipments = null;
+    public int[] SelectCustomEquipments { get { return syncSelectCustomEquipments.Value; } set { syncSelectCustomEquipments.Value = value; } }
+
+    private SyncIsInvincibleRpcComponent syncIsInvincible = null;
+    public bool IsInvincible { get { return syncIsInvincible.Value; } set { syncIsInvincible.Value = value; } }
+
+    private SyncAttributeAmountsRpcComponent syncAttributeAmounts = null;
+    public AttributeAmounts AttributeAmounts { get { return syncAttributeAmounts.Value; } set { syncAttributeAmounts.Value = value; } }
+
+    private SyncExtraRpcComponent syncExtra = null;
+    public string Extra { get { return syncExtra.Value; } set { syncExtra.Value = value; } }
+
+    private SyncDefaultSelectWeaponRpcComponent syncDefaultSelectWeapon = null;
+    public virtual int DefaultSelectWeapon { get { return syncDefaultSelectWeapon.Value; } set { syncDefaultSelectWeapon.Value = value; } }
+
+    public virtual bool IsBlocking
     {
-        get { return _level; }
-        set
-        {
-            if (PhotonNetwork.IsMasterClient && value != level)
-            {
-                _level = value;
-                photonView.OthersRPC(RpcUpdateLevel, value);
-            }
-        }
+        get { return CacheCharacterAction.IsBlocking; }
+        set { CacheCharacterAction.IsBlocking = value; }
     }
-    public virtual int statPoint
+    public virtual short AttackingActionId
     {
-        get { return _statPoint; }
-        set
-        {
-            if (PhotonNetwork.IsMasterClient && value != statPoint)
-            {
-                _statPoint = value;
-                photonView.OthersRPC(RpcUpdateStatPoint, value);
-            }
-        }
+        get { return CacheCharacterAction.AttackingActionId; }
+        set { CacheCharacterAction.AttackingActionId = value; }
     }
-    public virtual int watchAdsCount
+    public virtual short UsingSkillHotkeyId
     {
-        get { return _watchAdsCount; }
-        set
-        {
-            if (PhotonNetwork.IsMasterClient && value != watchAdsCount)
-            {
-                _watchAdsCount = value;
-                photonView.OthersRPC(RpcUpdateWatchAdsCount, value);
-            }
-        }
+        get { return CacheCharacterAction.UsingSkillHotkeyId; }
+        set { CacheCharacterAction.UsingSkillHotkeyId = value; }
     }
-    public virtual int selectCharacter
+    public virtual Vector3 AimPosition
     {
-        get { return _selectCharacter; }
-        set
-        {
-            if (PhotonNetwork.IsMasterClient && value != selectCharacter)
-            {
-                _selectCharacter = value;
-                photonView.AllRPC(RpcUpdateSelectCharacter, value);
-            }
-        }
-    }
-    public virtual int selectHead
-    {
-        get { return _selectHead; }
-        set
-        {
-            if (PhotonNetwork.IsMasterClient && value != selectHead)
-            {
-                _selectHead = value;
-                photonView.AllRPC(RpcUpdateSelectHead, value);
-            }
-        }
-    }
-    public virtual int selectWeapon
-    {
-        get { return _selectWeapon; }
-        set
-        {
-            if (PhotonNetwork.IsMasterClient && value != selectWeapon)
-            {
-                _selectWeapon = value;
-                photonView.AllRPC(RpcUpdateSelectWeapon, value);
-            }
-        }
-    }
-    public virtual int[] selectCustomEquipments
-    {
-        get { return _selectCustomEquipments; }
-        set
-        {
-            if (PhotonNetwork.IsMasterClient && value != selectCustomEquipments)
-            {
-                _selectCustomEquipments = value;
-                photonView.AllRPC(RpcUpdateSelectCustomEquipments, value);
-            }
-        }
-    }
-    public virtual bool isInvincible
-    {
-        get { return _isInvincible; }
-        set
-        {
-            if (PhotonNetwork.IsMasterClient && value != isInvincible)
-            {
-                _isInvincible = value;
-                photonView.OthersRPC(RpcUpdateIsInvincible, value);
-            }
-        }
-    }
-    public virtual short attackingActionId
-    {
-        get { return _attackingActionId; }
-        set
-        {
-            if (photonView.IsMine && value != attackingActionId)
-            {
-                _attackingActionId = value;
-                photonView.OthersRPC(RpcUpdateAttackingActionId, value);
-            }
-        }
-    }
-    public virtual short usingSkillHotkeyId
-    {
-        get { return _usingSkillHotkeyId; }
-        set
-        {
-            if (photonView.IsMine && value != usingSkillHotkeyId)
-            {
-                _usingSkillHotkeyId = value;
-                photonView.OthersRPC(RpcUpdateUsingSkillHotkeyId, value);
-            }
-        }
-    }
-    public virtual CharacterStats addStats
-    {
-        get { return _addStats; }
-        set
-        {
-            if (PhotonNetwork.IsMasterClient)
-            {
-                _addStats = value;
-                photonView.OthersRPC(RpcUpdateAddStats, value);
-            }
-        }
-    }
-    public virtual string extra
-    {
-        get { return _extra; }
-        set
-        {
-            if (PhotonNetwork.IsMasterClient && value != extra)
-            {
-                _extra = value;
-                photonView.OthersRPC(RpcUpdateExtra, value);
-            }
-        }
-    }
-    public virtual int defaultSelectWeapon
-    {
-        get { return _defaultSelectWeapon; }
-        set
-        {
-            if (PhotonNetwork.IsMasterClient && value != _defaultSelectWeapon)
-            {
-                _defaultSelectWeapon = value;
-                photonView.OthersRPC(RpcUpdateDefaultSelectWeapon, value);
-            }
-        }
-    }
-    public virtual Vector3 aimPosition
-    {
-        get { return _aimPosition; }
-        set
-        {
-            if (photonView.IsMine && value != aimPosition)
-            {
-                _aimPosition = value;
-                photonView.OthersRPC(RpcUpdateAimPosition, value);
-            }
-        }
+        get { return CacheCharacterAction.AimPosition; }
+        set { CacheCharacterAction.AimPosition = value; }
     }
     #endregion
 
     public override bool IsDead
     {
-        get { return hp <= 0; }
+        get { return Hp <= 0; }
     }
 
     public override bool IsBot
@@ -347,7 +212,6 @@ public class CharacterEntity : BaseNetworkGameCharacter
     protected Vector3 inputDirection;
     protected bool inputAttack;
     protected bool inputJump;
-    protected bool isDashing;
     protected Vector3 dashInputMove;
     protected float dashingTime;
     protected Dictionary<sbyte, SkillData> skills = new Dictionary<sbyte, SkillData>();
@@ -360,16 +224,16 @@ public class CharacterEntity : BaseNetworkGameCharacter
     protected float lastActionTime;
     protected Coroutine endActionDelayCoroutine;
 
-    public bool isReady { get; private set; }
-    public bool isDead { get; private set; }
-    public bool isGrounded { get { return CacheCharacterMovement.IsGrounded; } }
-    public bool isPlayingAttackAnim { get; private set; }
-    public bool isPlayingUseSkillAnim { get; private set; }
-    public DamageEntity attackingDamageEntity { get; private set; }
-    public int attackingSpreadDamages { get; private set; }
-    public float deathTime { get; private set; }
-    public float invincibleTime { get; private set; }
-    public bool currentActionIsForLeftHand { get; protected set; }
+    public bool IsReady { get; protected set; }
+    public bool IsDeadMarked { get; protected set; }
+    public bool IsGrounded { get { return CacheCharacterMovement.IsGrounded; } }
+    public bool IsPlayingAttackAnim { get; protected set; }
+    public bool IsPlayingUseSkillAnim { get; protected set; }
+    public DamageEntity AttackingDamageEntity { get; protected set; }
+    public int AttackingSpreadDamages { get; protected set; }
+    public bool IsDashing { get; protected set; }
+    public float DeathTime { get; protected set; }
+    public float InvincibleTime { get; protected set; }
 
     public Dictionary<sbyte, SkillData> Skills
     {
@@ -397,30 +261,48 @@ public class CharacterEntity : BaseNetworkGameCharacter
     public Transform CacheTransform { get; private set; }
     public Rigidbody CacheRigidbody { get; private set; }
     public CharacterMovement CacheCharacterMovement { get; private set; }
+    public CharacterAction CacheCharacterAction { get; private set; }
 
+    protected bool refreshingSumAddStats = true;
+    protected CharacterStats sumAddStats = new CharacterStats();
     public virtual CharacterStats SumAddStats
     {
         get
         {
-            var stats = new CharacterStats();
-            stats += addStats;
-            if (headData != null)
-                stats += headData.stats;
-            if (characterData != null)
-                stats += characterData.stats;
-            if (weaponData != null)
-                stats += weaponData.stats;
-            if (customEquipmentDict != null)
+            if (refreshingSumAddStats)
             {
-                foreach (var value in customEquipmentDict.Values)
-                    stats += value.stats;
+                var addStats = new CharacterStats();
+                if (headData != null)
+                    addStats += headData.stats;
+                if (characterData != null)
+                    addStats += characterData.stats;
+                if (weaponData != null)
+                    addStats += weaponData.stats;
+                if (customEquipmentDict != null)
+                {
+                    foreach (var value in customEquipmentDict.Values)
+                    {
+                        addStats += value.stats;
+                    }
+                }
+                if (AttributeAmounts.Dict != null)
+                {
+                    foreach (var kv in AttributeAmounts.Dict)
+                    {
+                        CharacterAttributes attribute;
+                        if (GameplayManager.Singleton.Attributes.TryGetValue(kv.Key, out attribute))
+                            addStats += attribute.stats * kv.Value;
+                    }
+                }
+                if (appliedStatusEffects != null)
+                {
+                    foreach (var value in appliedStatusEffects.Values)
+                        addStats += value.addStats;
+                }
+                sumAddStats = addStats;
+                refreshingSumAddStats = false;
             }
-            if (appliedStatusEffects != null)
-            {
-                foreach (var value in appliedStatusEffects.Values)
-                    stats += value.addStats;
-            }
-            return stats;
+            return sumAddStats;
         }
     }
 
@@ -428,7 +310,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
     {
         get
         {
-            var total = GameplayManager.Singleton.minHp + SumAddStats.addHp;
+            var total = GameplayManager.Singleton.baseHp + SumAddStats.addHp;
             return total;
         }
     }
@@ -437,7 +319,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
     {
         get
         {
-            var total = GameplayManager.Singleton.minAttack + SumAddStats.addAttack;
+            var total = GameplayManager.Singleton.baseAttack + SumAddStats.addAttack;
             return total;
         }
     }
@@ -446,7 +328,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
     {
         get
         {
-            var total = GameplayManager.Singleton.minDefend + SumAddStats.addDefend;
+            var total = GameplayManager.Singleton.baseDefend + SumAddStats.addDefend;
             return total;
         }
     }
@@ -455,7 +337,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
     {
         get
         {
-            var total = GameplayManager.Singleton.minMoveSpeed + SumAddStats.addMoveSpeed;
+            var total = GameplayManager.Singleton.baseMoveSpeed + SumAddStats.addMoveSpeed;
             return total;
         }
     }
@@ -484,6 +366,20 @@ public class CharacterEntity : BaseNetworkGameCharacter
         {
             var total = 1 + SumAddStats.addHpRecoveryRate;
             return total;
+        }
+    }
+
+    public virtual float TotalBlockReduceDamageRate
+    {
+        get
+        {
+            var total = GameplayManager.Singleton.baseBlockReduceDamageRate + SumAddStats.addBlockReduceDamageRate;
+
+            var maxValue = GameplayManager.Singleton.maxBlockReduceDamageRate;
+            if (total < maxValue)
+                return total;
+            else
+                return maxValue;
         }
     }
 
@@ -532,12 +428,12 @@ public class CharacterEntity : BaseNetworkGameCharacter
 
     public virtual int RewardExp
     {
-        get { return GameplayManager.Singleton.GetRewardExp(level); }
+        get { return GameplayManager.Singleton.GetRewardExp(Level); }
     }
 
     public virtual int KillScore
     {
-        get { return GameplayManager.Singleton.GetKillScore(level); }
+        get { return GameplayManager.Singleton.GetKillScore(Level); }
     }
 
     protected override void Init()
@@ -545,18 +441,18 @@ public class CharacterEntity : BaseNetworkGameCharacter
         if (!PhotonNetwork.IsMasterClient)
             return;
         base.Init();
-        hp = 0;
-        exp = 0;
-        level = 1;
-        statPoint = 0;
-        watchAdsCount = 0;
-        selectCharacter = 0;
-        selectHead = 0;
-        selectWeapon = 0;
-        selectCustomEquipments = new int[0];
-        isInvincible = false;
-        addStats = new CharacterStats();
-        extra = "";
+        Hp = 0;
+        Exp = 0;
+        Level = 1;
+        StatPoint = 0;
+        WatchAdsCount = 0;
+        SelectCharacter = 0;
+        SelectHead = 0;
+        SelectWeapon = 0;
+        SelectCustomEquipments = new int[0];
+        IsInvincible = false;
+        AttributeAmounts = new AttributeAmounts(0);
+        Extra = string.Empty;
     }
 
     protected override void Awake()
@@ -567,6 +463,9 @@ public class CharacterEntity : BaseNetworkGameCharacter
         CacheRigidbody = GetComponent<Rigidbody>();
         CacheRigidbody.useGravity = false;
         CacheCharacterMovement = gameObject.GetOrAddComponent<CharacterMovement>();
+        CacheCharacterAction = gameObject.GetOrAddComponent<CharacterAction>();
+        if (!photonView.ObservedComponents.Contains(CacheCharacterAction))
+            photonView.ObservedComponents.Add(CacheCharacterAction);
         if (damageLaunchTransform == null)
             damageLaunchTransform = CacheTransform;
         if (effectTransform == null)
@@ -577,51 +476,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
         {
             localPlayerObject.SetActive(false);
         }
-        deathTime = Time.unscaledTime;
-    }
-
-    protected override void SyncData()
-    {
-        if (!PhotonNetwork.IsMasterClient)
-            return;
-        base.SyncData();
-        photonView.OthersRPC(RpcUpdateHp, hp);
-        photonView.OthersRPC(RpcUpdateExp, exp);
-        photonView.OthersRPC(RpcUpdateLevel, level);
-        photonView.OthersRPC(RpcUpdateStatPoint, statPoint);
-        photonView.OthersRPC(RpcUpdateWatchAdsCount, watchAdsCount);
-        photonView.OthersRPC(RpcUpdateSelectCharacter, selectCharacter);
-        photonView.OthersRPC(RpcUpdateSelectHead, selectHead);
-        photonView.OthersRPC(RpcUpdateSelectWeapon, selectWeapon);
-        photonView.OthersRPC(RpcUpdateSelectCustomEquipments, selectCustomEquipments);
-        photonView.OthersRPC(RpcUpdateIsInvincible, isInvincible);
-        photonView.OthersRPC(RpcUpdateAttackingActionId, attackingActionId);
-        photonView.OthersRPC(RpcUpdateUsingSkillHotkeyId, usingSkillHotkeyId);
-        photonView.OthersRPC(RpcUpdateAddStats, addStats);
-        photonView.OthersRPC(RpcUpdateExtra, extra);
-        photonView.OthersRPC(RpcUpdateAimPosition, aimPosition);
-    }
-
-    public override void OnPlayerEnteredRoom(Player newPlayer)
-    {
-        if (!PhotonNetwork.IsMasterClient)
-            return;
-        base.OnPlayerEnteredRoom(newPlayer);
-        photonView.TargetRPC(RpcUpdateHp, newPlayer, hp);
-        photonView.TargetRPC(RpcUpdateExp, newPlayer, exp);
-        photonView.TargetRPC(RpcUpdateLevel, newPlayer, level);
-        photonView.TargetRPC(RpcUpdateStatPoint, newPlayer, statPoint);
-        photonView.TargetRPC(RpcUpdateWatchAdsCount, newPlayer, watchAdsCount);
-        photonView.TargetRPC(RpcUpdateSelectCharacter, newPlayer, selectCharacter);
-        photonView.TargetRPC(RpcUpdateSelectHead, newPlayer, selectHead);
-        photonView.TargetRPC(RpcUpdateSelectWeapon, newPlayer, selectWeapon);
-        photonView.TargetRPC(RpcUpdateSelectCustomEquipments, newPlayer, selectCustomEquipments);
-        photonView.TargetRPC(RpcUpdateIsInvincible, newPlayer, isInvincible);
-        photonView.TargetRPC(RpcUpdateAttackingActionId, newPlayer, attackingActionId);
-        photonView.TargetRPC(RpcUpdateUsingSkillHotkeyId, newPlayer, usingSkillHotkeyId);
-        photonView.TargetRPC(RpcUpdateAddStats, newPlayer, addStats);
-        photonView.TargetRPC(RpcUpdateExtra, newPlayer, extra);
-        photonView.TargetRPC(RpcUpdateAimPosition, newPlayer, aimPosition);
+        DeathTime = Time.unscaledTime;
     }
 
     protected override void OnStartLocalPlayer()
@@ -659,45 +514,46 @@ public class CharacterEntity : BaseNetworkGameCharacter
 
         if (Hp <= 0)
         {
-            if (!PhotonNetwork.IsMasterClient && photonView.IsMine && Time.unscaledTime - deathTime >= DISCONNECT_WHEN_NOT_RESPAWN_DURATION)
+            if (!PhotonNetwork.IsMasterClient && photonView.IsMine && Time.unscaledTime - DeathTime >= DISCONNECT_WHEN_NOT_RESPAWN_DURATION)
                 GameNetworkManager.Singleton.LeaveRoom();
 
             if (photonView.IsMine)
             {
-                attackingActionId = -1;
-                usingSkillHotkeyId = -1;
+                AttackingActionId = -1;
+                UsingSkillHotkeyId = -1;
+                IsBlocking = false;
             }
         }
 
-        if (PhotonNetwork.IsMasterClient && isInvincible && Time.unscaledTime - invincibleTime >= GameplayManager.Singleton.invincibleDuration)
-            isInvincible = false;
+        if (PhotonNetwork.IsMasterClient && IsInvincible && Time.unscaledTime - InvincibleTime >= GameplayManager.Singleton.invincibleDuration)
+            IsInvincible = false;
         if (invincibleEffect != null)
-            invincibleEffect.SetActive(isInvincible);
+            invincibleEffect.SetActive(IsInvincible);
         if (nameText != null)
-            nameText.text = playerName;
+            nameText.text = PlayerName;
         if (hpBarContainer != null)
-            hpBarContainer.gameObject.SetActive(hp > 0);
+            hpBarContainer.gameObject.SetActive(Hp > 0);
         if (hpFillImage != null)
-            hpFillImage.fillAmount = (float)hp / (float)TotalHp;
+            hpFillImage.fillAmount = (float)Hp / (float)TotalHp;
         if (hpText != null)
-            hpText.text = hp + "/" + TotalHp;
+            hpText.text = Hp + "/" + TotalHp;
         if (levelText != null)
-            levelText.text = level.ToString("N0");
+            levelText.text = Level.ToString("N0");
         UpdateViewMode();
         UpdateAimPosition();
         UpdateAnimation();
         UpdateInput();
         // Update dash state
-        if (isDashing && Time.unscaledTime - dashingTime > dashDuration)
-            isDashing = false;
+        if (IsDashing && Time.unscaledTime - dashingTime > dashDuration)
+            IsDashing = false;
         // Update attack signal
         if (attackSignalObject != null)
-            attackSignalObject.SetActive(isPlayingAttackAnim || isPlayingUseSkillAnim);
+            attackSignalObject.SetActive(IsPlayingAttackAnim || IsPlayingUseSkillAnim);
         // TODO: Improve team codes
         if (attackSignalObjectForTeamA != null)
-            attackSignalObjectForTeamA.SetActive((isPlayingAttackAnim || isPlayingUseSkillAnim) && playerTeam == 1);
+            attackSignalObjectForTeamA.SetActive((IsPlayingAttackAnim || IsPlayingUseSkillAnim) && PlayerTeam == 1);
         if (attackSignalObjectForTeamB != null)
-            attackSignalObjectForTeamB.SetActive((isPlayingAttackAnim || isPlayingUseSkillAnim) && playerTeam == 2);
+            attackSignalObjectForTeamB.SetActive((IsPlayingAttackAnim || IsPlayingUseSkillAnim) && PlayerTeam == 2);
     }
 
     private void FixedUpdate()
@@ -763,17 +619,20 @@ public class CharacterEntity : BaseNetworkGameCharacter
                 inputMove += cameraRight * InputManager.GetAxis("Horizontal", false);
             }
 
-            // Jump
-            if (!IsDead && !inputJump)
-                inputJump = InputManager.GetButtonDown("Jump") && isGrounded && !isDashing;
+            // Bloacking
+            IsBlocking = !IsDead && !IsDashing && AttackingActionId < 0 && UsingSkillHotkeyId < 0 && IsGrounded && InputManager.GetButton("Block");
 
-            if (!isDashing)
+            // Jump
+            if (!IsDead && !IsBlocking && !inputJump)
+                inputJump = InputManager.GetButtonDown("Jump") && IsGrounded && !IsDashing;
+
+            if (!IsBlocking && !IsDashing)
             {
                 UpdateInputDirection_TopDown(canAttack);
                 UpdateInputDirection_ThirdPerson(canAttack);
                 if (!IsDead)
-                    isDashing = InputManager.GetButtonDown("Dash") && isGrounded;
-                if (isDashing)
+                    IsDashing = InputManager.GetButtonDown("Dash") && IsGrounded;
+                if (IsDashing)
                 {
                     if (isMobileInput)
                         dashInputMove = inputMove.normalized;
@@ -978,22 +837,21 @@ public class CharacterEntity : BaseNetworkGameCharacter
         {
             case ViewMode.TopDown:
                 // Update aim position
-                currentActionIsForLeftHand = CurrentActionIsForLeftHand();
                 Transform launchTransform;
-                GetDamageLaunchTransform(currentActionIsForLeftHand, out launchTransform);
-                aimPosition = launchTransform.position + (CacheTransform.forward * attackDist);
+                GetDamageLaunchTransform(CurrentActionIsForLeftHand(), out launchTransform);
+                AimPosition = launchTransform.position + (CacheTransform.forward * attackDist);
                 break;
             case ViewMode.ThirdPerson:
                 float distanceToCharacter = Vector3.Distance(CacheTransform.position, followCameraControls.CacheCameraTransform.position);
                 float distanceToTarget = attackDist;
                 Vector3 lookAtCharacterPosition = targetCamera.ScreenToWorldPoint(new Vector3(Screen.width * 0.5f, Screen.height * 0.5f, distanceToCharacter));
                 Vector3 lookAtTargetPosition = targetCamera.ScreenToWorldPoint(new Vector3(Screen.width * 0.5f, Screen.height * 0.5f, distanceToTarget));
-                aimPosition = lookAtTargetPosition;
+                AimPosition = lookAtTargetPosition;
                 RaycastHit[] hits = Physics.RaycastAll(lookAtCharacterPosition, (lookAtTargetPosition - lookAtCharacterPosition).normalized, attackDist);
                 for (int i = 0; i < hits.Length; ++i)
                 {
                     if (hits[i].transform.root != transform.root)
-                        aimPosition = hits[i].point;
+                        AimPosition = hits[i].point;
                 }
                 break;
         }
@@ -1004,7 +862,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
         if (characterModel == null)
             return;
 
-        var animator = characterModel.TempAnimator;
+        var animator = characterModel.CacheAnimator;
         if (animator == null)
             return;
 
@@ -1015,6 +873,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
             animator.SetFloat("MoveSpeed", 0);
             animator.SetBool("IsGround", true);
             animator.SetBool("IsDash", false);
+            animator.SetBool("IsBlock", false);
         }
         else
         {
@@ -1025,17 +884,18 @@ public class CharacterEntity : BaseNetworkGameCharacter
             animator.SetFloat("JumpSpeed", ySpeed);
             animator.SetFloat("MoveSpeed", xzMagnitude);
             animator.SetBool("IsGround", Mathf.Abs(ySpeed) < 0.5f);
-            animator.SetBool("IsDash", isDashing);
+            animator.SetBool("IsDash", IsDashing);
+            animator.SetBool("IsBlock", IsBlocking);
         }
 
         animator.SetInteger("WeaponAnimId", weaponData != null ? weaponData.weaponAnimId : 0);
 
         animator.SetBool("IsIdle", !animator.GetBool("IsDead") && !animator.GetBool("DoAction") && animator.GetBool("IsGround"));
 
-        if (attackingActionId >= 0 && usingSkillHotkeyId < 0 && !isPlayingAttackAnim)
+        if (AttackingActionId >= 0 && UsingSkillHotkeyId < 0 && !IsPlayingAttackAnim)
             StartCoroutine(AttackRoutine());
 
-        if (usingSkillHotkeyId >= 0 && !isPlayingUseSkillAnim)
+        if (UsingSkillHotkeyId >= 0 && !IsPlayingUseSkillAnim)
             StartCoroutine(UseSkillRoutine());
     }
 
@@ -1046,16 +906,16 @@ public class CharacterEntity : BaseNetworkGameCharacter
 
     protected virtual bool CurrentActionIsForLeftHand()
     {
-        if (usingSkillHotkeyId >= 0)
+        if (UsingSkillHotkeyId >= 0)
         {
             SkillData skillData;
-            if (skills.TryGetValue((sbyte)usingSkillHotkeyId, out skillData))
+            if (skills.TryGetValue((sbyte)UsingSkillHotkeyId, out skillData))
                 return skillData.attackAnimation.isAnimationForLeftHandWeapon;
         }
-        else if (attackingActionId >= 0)
+        else if (AttackingActionId >= 0)
         {
             AttackAnimation attackAnimation;
-            if (weaponData.AttackAnimations.TryGetValue(attackingActionId, out attackAnimation))
+            if (weaponData.AttackAnimations.TryGetValue(AttackingActionId, out attackAnimation))
                 return attackAnimation.isAnimationForLeftHandWeapon;
         }
         return false;
@@ -1067,7 +927,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
             direction = direction.normalized;
         direction.y = 0;
 
-        var targetSpeed = GetMoveSpeed() * (isDashing ? dashMoveSpeedMultiplier : 1f);
+        var targetSpeed = GetMoveSpeed() * (IsBlocking ? blockMoveSpeedMultiplier : (IsDashing ? dashMoveSpeedMultiplier : 1f));
         CacheCharacterMovement.UpdateMovement(Time.deltaTime, targetSpeed, direction, inputJump);
     }
 
@@ -1079,16 +939,16 @@ public class CharacterEntity : BaseNetworkGameCharacter
         var moveDirection = inputMove;
         var dashDirection = dashInputMove;
 
-        Move(isDashing ? dashDirection : moveDirection);
+        Move(IsDashing ? dashDirection : moveDirection);
         // Turn character to move direction
         if (inputDirection.magnitude <= 0 && inputMove.magnitude > 0 || viewMode == ViewMode.ThirdPerson)
             inputDirection = inputMove;
-        if (characterModel && characterModel.TempAnimator && (characterModel.TempAnimator.GetBool("DoAction") || Time.unscaledTime - lastActionTime <= returnToMoveDirectionDelay) && viewMode == ViewMode.ThirdPerson)
+        if (characterModel && characterModel.CacheAnimator && (characterModel.CacheAnimator.GetBool("DoAction") || Time.unscaledTime - lastActionTime <= returnToMoveDirectionDelay) && viewMode == ViewMode.ThirdPerson)
             inputDirection = cameraForward;
         if (!IsDead)
-            Rotate(isDashing ? dashInputMove : inputDirection);
+            Rotate(IsDashing ? dashInputMove : inputDirection);
 
-        if (!IsDead)
+        if (!IsDead && !IsBlocking)
         {
             if (inputAttack && GameplayManager.Singleton.CanAttack(this))
                 Attack();
@@ -1120,31 +980,34 @@ public class CharacterEntity : BaseNetworkGameCharacter
 
     protected void Attack()
     {
-        if (attackingActionId < 0 && photonView.IsMine)
+        if (IsPlayingAttackAnim || IsBlocking)
+            return;
+
+        if (AttackingActionId < 0 && photonView.IsMine)
         {
             if (weaponData != null)
-                attackingActionId = weaponData.GetRandomAttackAnimation().actionId;
+                AttackingActionId = weaponData.GetRandomAttackAnimation().actionId;
             else
-                attackingActionId = -1;
+                AttackingActionId = -1;
         }
     }
 
     protected void StopAttack()
     {
-        if (attackingActionId >= 0 && photonView.IsMine)
-            attackingActionId = -1;
+        if (AttackingActionId >= 0 && photonView.IsMine)
+            AttackingActionId = -1;
     }
 
     public void UseSkill(sbyte hotkeyId)
     {
         SkillData skill;
-        if (attackingActionId < 0 &&
-            usingSkillHotkeyId < 0 &&
+        if (AttackingActionId < 0 &&
+            UsingSkillHotkeyId < 0 &&
             photonView.IsMine && skills.TryGetValue(hotkeyId, out skill) &&
             GetSkillCoolDownCount(hotkeyId) > skill.coolDown)
         {
             lastSkillUseTimes[hotkeyId] = Time.unscaledTime;
-            usingSkillHotkeyId = hotkeyId;
+            UsingSkillHotkeyId = hotkeyId;
         }
     }
 
@@ -1155,69 +1018,69 @@ public class CharacterEntity : BaseNetworkGameCharacter
 
     IEnumerator AttackRoutine()
     {
-        if (!isPlayingAttackAnim &&
+        if (!IsPlayingAttackAnim &&
             Hp > 0 &&
             characterModel != null &&
-            characterModel.TempAnimator != null)
+            characterModel.CacheAnimator != null)
         {
-            isPlayingAttackAnim = true;
+            IsPlayingAttackAnim = true;
             AttackAnimation attackAnimation;
-            if (weaponData != null && attackingActionId >= 0 && attackingActionId < 255 &&
-                weaponData.AttackAnimations.TryGetValue(attackingActionId, out attackAnimation))
+            if (weaponData != null && AttackingActionId >= 0 && AttackingActionId < 255 &&
+                weaponData.AttackAnimations.TryGetValue(AttackingActionId, out attackAnimation))
             {
-                attackingDamageEntity = weaponData.damagePrefab;
-                attackingSpreadDamages = TotalSpreadDamages;
-                byte actionId = (byte)attackingActionId;
+                AttackingDamageEntity = weaponData.damagePrefab;
+                AttackingSpreadDamages = TotalSpreadDamages;
+                byte actionId = (byte)AttackingActionId;
                 yield return StartCoroutine(PlayAttackAnimationRoutine(attackAnimation, weaponData.attackFx, () =>
                 {
-                    weaponData.Launch(this, aimPosition, actionId);
+                    weaponData.Launch(this, AimPosition, actionId);
                 }));
                 // If player still attacking, random new attacking action id
-                if (PhotonNetwork.IsMasterClient && attackingActionId >= 0 && weaponData != null)
-                    attackingActionId = weaponData.GetRandomAttackAnimation().actionId;
-                attackingDamageEntity = null;
-                attackingSpreadDamages = 0;
+                if (PhotonNetwork.IsMasterClient && AttackingActionId >= 0 && weaponData != null)
+                    AttackingActionId = weaponData.GetRandomAttackAnimation().actionId;
+                AttackingDamageEntity = null;
+                AttackingSpreadDamages = 0;
             }
-            isPlayingAttackAnim = false;
+            IsPlayingAttackAnim = false;
         }
     }
 
     IEnumerator UseSkillRoutine()
     {
-        if (!isPlayingUseSkillAnim &&
+        if (!IsPlayingUseSkillAnim &&
             Hp > 0 &&
             characterModel != null &&
-            characterModel.TempAnimator != null)
+            characterModel.CacheAnimator != null)
         {
-            isPlayingUseSkillAnim = true;
+            IsPlayingUseSkillAnim = true;
             SkillData skillData;
-            if (skills.TryGetValue((sbyte)usingSkillHotkeyId, out skillData))
+            if (skills.TryGetValue((sbyte)UsingSkillHotkeyId, out skillData))
             {
-                attackingDamageEntity = skillData.damagePrefab;
-                attackingSpreadDamages = skillData.TotalSpreadDamages;
+                AttackingDamageEntity = skillData.damagePrefab;
+                AttackingSpreadDamages = skillData.TotalSpreadDamages;
                 yield return StartCoroutine(PlayAttackAnimationRoutine(skillData.attackAnimation, skillData.attackFx, () =>
                 {
-                    skillData.Launch(this, aimPosition);
+                    skillData.Launch(this, AimPosition);
                 }));
-                attackingDamageEntity = null;
-                attackingSpreadDamages = 0;
+                AttackingDamageEntity = null;
+                AttackingSpreadDamages = 0;
             }
-            usingSkillHotkeyId = -1;
-            isPlayingUseSkillAnim = false;
+            UsingSkillHotkeyId = -1;
+            IsPlayingUseSkillAnim = false;
         }
     }
 
     IEnumerator PlayAttackAnimationRoutine(AttackAnimation attackAnimation, AudioClip[] attackFx, System.Action onAttack)
     {
-        var animator = characterModel.TempAnimator;
+        var animator = characterModel.CacheAnimator;
         if (animator != null && attackAnimation != null)
         {
             if (endActionDelayCoroutine != null)
                 StopCoroutine(endActionDelayCoroutine);
             // Play attack animation
-            characterModel.TempAnimator.SetBool("DoAction", true);
-            characterModel.TempAnimator.SetInteger("ActionID", attackAnimation.actionId);
-            characterModel.TempAnimator.Play(0, 1, 0);
+            characterModel.CacheAnimator.SetBool("DoAction", true);
+            characterModel.CacheAnimator.SetInteger("ActionID", attackAnimation.actionId);
+            characterModel.CacheAnimator.Play(0, 1, 0);
 
             // Wait to launch damage entity
             var speed = attackAnimation.speed;
@@ -1245,18 +1108,25 @@ public class CharacterEntity : BaseNetworkGameCharacter
     {
         if (delay > 0f)
             yield return new WaitForSeconds(delay);
-        characterModel.TempAnimator.SetBool("DoAction", false);
+        characterModel.CacheAnimator.SetBool("DoAction", false);
     }
 
     public virtual bool ReceiveDamage(CharacterEntity attacker, int damage)
     {
-        if (Hp <= 0 || isInvincible)
+        if (Hp <= 0 || IsInvincible)
             return false;
 
         if (!GameplayManager.Singleton.CanReceiveDamage(this, attacker))
             return false;
 
+        // Calculate damage and reduceHp
         int reduceHp = (int)(damage + ((float)damage * TotalIncreaseDamageRate) - ((float)damage * TotalReduceReceiveDamageRate)) - TotalDefend;
+
+        // Blocking
+        if (IsBlocking)
+            reduceHp -= Mathf.CeilToInt(damage * TotalBlockReduceDamageRate);
+
+        // Avoid increasing hp by damage
         if (reduceHp < 0)
             reduceHp = 0;
 
@@ -1280,7 +1150,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
                 if (onDead != null)
                     onDead.Invoke();
                 attacker.KilledTarget(this);
-                ++dieCount;
+                ++syncDieCount.Value;
             }
         }
         return true;
@@ -1292,18 +1162,18 @@ public class CharacterEntity : BaseNetworkGameCharacter
             return;
 
         var gameplayManager = GameplayManager.Singleton;
-        var targetLevel = target.level;
+        var targetLevel = target.Level;
         var maxLevel = gameplayManager.maxLevel;
         Exp += Mathf.CeilToInt(target.RewardExp * TotalExpRate);
-        score += Mathf.CeilToInt(target.KillScore * TotalScoreRate);
+        syncScore.Value += Mathf.CeilToInt(target.KillScore * TotalScoreRate);
         foreach (var rewardCurrency in gameplayManager.rewardCurrencies)
         {
             var currencyId = rewardCurrency.currencyId;
             var amount = rewardCurrency.amount.Calculate(targetLevel, maxLevel);
             photonView.TargetRPC(RpcTargetRewardCurrency, photonView.Owner, currencyId, amount);
         }
-        ++killCount;
-        GameNetworkManager.Singleton.SendKillNotify(playerName, target.playerName, weaponData == null ? string.Empty : weaponData.GetId());
+        ++syncKillCount.Value;
+        GameNetworkManager.Singleton.SendKillNotify(PlayerName, target.PlayerName, weaponData == null ? string.Empty : weaponData.GetId());
     }
 
     public void Heal(int amount)
@@ -1328,7 +1198,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
     {
         if (weaponData == null)
             return;
-        selectWeapon = weaponData.GetHashId();
+        SelectWeapon = weaponData.GetHashId();
     }
 
     public void UpdateCharacterModelHiddingState()
@@ -1347,12 +1217,91 @@ public class CharacterEntity : BaseNetworkGameCharacter
 
     public virtual void OnSpawn() { }
 
+    public virtual void OnUpdateSelectCharacter(int selectCharacter)
+    {
+        if (characterModel != null)
+            Destroy(characterModel.gameObject);
+        characterData = GameInstance.GetCharacter(selectCharacter);
+        if (characterData == null || characterData.modelObject == null)
+            return;
+        characterModel = Instantiate(characterData.modelObject, characterModelTransform);
+        characterModel.transform.localPosition = Vector3.zero;
+        characterModel.transform.localEulerAngles = Vector3.zero;
+        characterModel.transform.localScale = Vector3.one;
+        if (headData != null)
+            characterModel.SetHeadModel(headData.modelObject);
+        if (weaponData != null)
+            characterModel.SetWeaponModel(weaponData.rightHandObject, weaponData.leftHandObject, weaponData.shieldObject);
+        if (customEquipmentDict != null)
+        {
+            characterModel.ClearCustomModels();
+            foreach (var value in customEquipmentDict.Values)
+            {
+                characterModel.SetCustomModel(value.containerIndex, value.modelObject);
+            }
+        }
+        characterModel.gameObject.SetActive(true);
+        UpdateCharacterModelHiddingState();
+        UpdateSkills();
+    }
+
+    public virtual void OnUpdateSelectHead(int selectHead)
+    {
+        headData = GameInstance.GetHead(selectHead);
+        if (characterModel != null && headData != null)
+            characterModel.SetHeadModel(headData.modelObject);
+        UpdateCharacterModelHiddingState();
+        UpdateSkills();
+    }
+
+    public virtual void OnUpdateSelectWeapon(int selectWeapon)
+    {
+        if (PhotonNetwork.IsMasterClient)
+        {
+            if (DefaultSelectWeapon == 0)
+                DefaultSelectWeapon = selectWeapon;
+        }
+        weaponData = GameInstance.GetWeapon(selectWeapon);
+        if (characterModel != null && weaponData != null)
+            characterModel.SetWeaponModel(weaponData.rightHandObject, weaponData.leftHandObject, weaponData.shieldObject);
+        UpdateCharacterModelHiddingState();
+        UpdateSkills();
+    }
+
+    public virtual void OnUpdateSelectCustomEquipments(int[] selectCustomEquipments)
+    {
+        if (characterModel != null)
+            characterModel.ClearCustomModels();
+        customEquipmentDict.Clear();
+        if (selectCustomEquipments != null)
+        {
+            for (var i = 0; i < selectCustomEquipments.Length; ++i)
+            {
+                var customEquipmentData = GameInstance.GetCustomEquipment(selectCustomEquipments[i]);
+                if (customEquipmentData != null &&
+                    !customEquipmentDict.ContainsKey(customEquipmentData.containerIndex))
+                {
+                    customEquipmentDict[customEquipmentData.containerIndex] = customEquipmentData;
+                    if (characterModel != null)
+                        characterModel.SetCustomModel(customEquipmentData.containerIndex, customEquipmentData.modelObject);
+                }
+            }
+        }
+        UpdateCharacterModelHiddingState();
+        UpdateSkills();
+    }
+
+    public virtual void OnUpdateAttributeAmounts()
+    {
+        refreshingSumAddStats = true;
+    }
+
     public void ServerInvincible()
     {
         if (!PhotonNetwork.IsMasterClient)
             return;
-        invincibleTime = Time.unscaledTime;
-        isInvincible = true;
+        InvincibleTime = Time.unscaledTime;
+        IsInvincible = true;
     }
 
     public void ServerSpawn(bool isWatchedAds)
@@ -1382,10 +1331,10 @@ public class CharacterEntity : BaseNetworkGameCharacter
     {
         if (!PhotonNetwork.IsMasterClient)
             return;
-        if (defaultSelectWeapon != 0)
-            selectWeapon = defaultSelectWeapon;
-        isPlayingAttackAnim = false;
-        isDead = false;
+        if (DefaultSelectWeapon != 0)
+            SelectWeapon = DefaultSelectWeapon;
+        IsPlayingAttackAnim = false;
+        IsDeadMarked = false;
         Hp = TotalHp;
         holdingUseSkillHotkeyId = -1;
         releasedUseSkillHotkeyId = -1;
@@ -1414,11 +1363,11 @@ public class CharacterEntity : BaseNetworkGameCharacter
         }
         if (!alreadyInit)
         {
-            this.selectHead = selectHead;
-            this.selectCharacter = selectCharacter;
-            this.selectWeapon = selectWeapon;
-            this.selectCustomEquipments = selectCustomEquipments;
-            this.extra = extra;
+            SelectHead = selectHead;
+            SelectCharacter = selectCharacter;
+            SelectWeapon = selectWeapon;
+            SelectCustomEquipments = selectCustomEquipments;
+            Extra = extra;
         }
         Hp = TotalHp;
     }
@@ -1431,10 +1380,10 @@ public class CharacterEntity : BaseNetworkGameCharacter
     [PunRPC]
     protected void RpcServerReady()
     {
-        if (!isReady)
+        if (!IsReady)
         {
             ServerSpawn(false);
-            isReady = true;
+            IsReady = true;
         }
     }
 
@@ -1449,9 +1398,9 @@ public class CharacterEntity : BaseNetworkGameCharacter
         ServerRespawn(isWatchedAds);
     }
 
-    public void CmdAddAttribute(string name)
+    public void CmdAddAttribute(int id)
     {
-        photonView.MasterRPC(RpcServerAddAttribute, name);
+        photonView.MasterRPC(RpcServerAddAttribute, id);
     }
 
     public void CmdDash()
@@ -1461,18 +1410,14 @@ public class CharacterEntity : BaseNetworkGameCharacter
     }
 
     [PunRPC]
-    protected void RpcServerAddAttribute(string name)
+    protected void RpcServerAddAttribute(int id)
     {
-        if (statPoint > 0)
+        if (StatPoint > 0)
         {
-            CharacterAttributes attribute;
-            if (GameplayManager.Singleton.attributes.TryGetValue(name, out attribute))
+            if (GameplayManager.Singleton.Attributes.ContainsKey(id))
             {
-                addStats += attribute.stats;
-                var changingWeapon = attribute.changingWeapon;
-                if (changingWeapon != null)
-                    ChangeWeapon(changingWeapon);
-                --statPoint;
+                AttributeAmounts = AttributeAmounts.Increase(id, 1);
+                --StatPoint;
             }
         }
     }
@@ -1516,14 +1461,14 @@ public class CharacterEntity : BaseNetworkGameCharacter
     protected void RpcDash()
     {
         // Just play dash animation on another clients
-        isDashing = true;
+        IsDashing = true;
         dashingTime = Time.unscaledTime;
     }
 
     [PunRPC]
     protected void RpcTargetDead()
     {
-        deathTime = Time.unscaledTime;
+        DeathTime = Time.unscaledTime;
     }
 
     [PunRPC]
@@ -1573,146 +1518,4 @@ public class CharacterEntity : BaseNetworkGameCharacter
             }
         }
     }
-
-    #region Update RPCs
-    [PunRPC]
-    protected virtual void RpcUpdateHp(int hp)
-    {
-        _hp = hp;
-    }
-    [PunRPC]
-    protected virtual void RpcUpdateExp(int exp)
-    {
-        _exp = exp;
-    }
-    [PunRPC]
-    protected virtual void RpcUpdateLevel(int level)
-    {
-        _level = level;
-    }
-    [PunRPC]
-    protected virtual void RpcUpdateStatPoint(int statPoint)
-    {
-        _statPoint = statPoint;
-    }
-    [PunRPC]
-    protected virtual void RpcUpdateWatchAdsCount(int watchAdsCount)
-    {
-        _watchAdsCount = watchAdsCount;
-    }
-    [PunRPC]
-    protected virtual void RpcUpdateSelectCharacter(int selectCharacter)
-    {
-        _selectCharacter = selectCharacter;
-
-        if (characterModel != null)
-            Destroy(characterModel.gameObject);
-        characterData = GameInstance.GetCharacter(selectCharacter);
-        if (characterData == null || characterData.modelObject == null)
-            return;
-        characterModel = Instantiate(characterData.modelObject, characterModelTransform);
-        characterModel.transform.localPosition = Vector3.zero;
-        characterModel.transform.localEulerAngles = Vector3.zero;
-        characterModel.transform.localScale = Vector3.one;
-        if (headData != null)
-            characterModel.SetHeadModel(headData.modelObject);
-        if (weaponData != null)
-            characterModel.SetWeaponModel(weaponData.rightHandObject, weaponData.leftHandObject, weaponData.shieldObject);
-        if (customEquipmentDict != null)
-        {
-            characterModel.ClearCustomModels();
-            foreach (var value in customEquipmentDict.Values)
-            {
-                characterModel.SetCustomModel(value.containerIndex, value.modelObject);
-            }
-        }
-        characterModel.gameObject.SetActive(true);
-        UpdateCharacterModelHiddingState();
-        UpdateSkills();
-    }
-    [PunRPC]
-    protected virtual void RpcUpdateSelectHead(int selectHead)
-    {
-        _selectHead = selectHead;
-        headData = GameInstance.GetHead(selectHead);
-        if (characterModel != null && headData != null)
-            characterModel.SetHeadModel(headData.modelObject);
-        UpdateCharacterModelHiddingState();
-        UpdateSkills();
-    }
-    [PunRPC]
-    protected virtual void RpcUpdateSelectWeapon(int selectWeapon)
-    {
-        _selectWeapon = selectWeapon;
-        if (PhotonNetwork.IsMasterClient)
-        {
-            if (defaultSelectWeapon == 0)
-                defaultSelectWeapon = selectWeapon;
-        }
-        weaponData = GameInstance.GetWeapon(selectWeapon);
-        if (characterModel != null && weaponData != null)
-            characterModel.SetWeaponModel(weaponData.rightHandObject, weaponData.leftHandObject, weaponData.shieldObject);
-        UpdateCharacterModelHiddingState();
-        UpdateSkills();
-    }
-    [PunRPC]
-    protected virtual void RpcUpdateSelectCustomEquipments(int[] selectCustomEquipments)
-    {
-        _selectCustomEquipments = selectCustomEquipments;
-        if (characterModel != null)
-            characterModel.ClearCustomModels();
-        customEquipmentDict.Clear();
-        if (_selectCustomEquipments != null)
-        {
-            for (var i = 0; i < _selectCustomEquipments.Length; ++i)
-            {
-                var customEquipmentData = GameInstance.GetCustomEquipment(_selectCustomEquipments[i]);
-                if (customEquipmentData != null &&
-                    !customEquipmentDict.ContainsKey(customEquipmentData.containerIndex))
-                {
-                    customEquipmentDict[customEquipmentData.containerIndex] = customEquipmentData;
-                    if (characterModel != null)
-                        characterModel.SetCustomModel(customEquipmentData.containerIndex, customEquipmentData.modelObject);
-                }
-            }
-        }
-        UpdateCharacterModelHiddingState();
-        UpdateSkills();
-    }
-    [PunRPC]
-    protected virtual void RpcUpdateIsInvincible(bool isInvincible)
-    {
-        _isInvincible = isInvincible;
-    }
-    [PunRPC]
-    protected virtual void RpcUpdateAttackingActionId(short attackingActionId)
-    {
-        _attackingActionId = attackingActionId;
-    }
-    [PunRPC]
-    protected virtual void RpcUpdateUsingSkillHotkeyId(short usingSkillHotkeyId)
-    {
-        _usingSkillHotkeyId = usingSkillHotkeyId;
-    }
-    [PunRPC]
-    protected virtual void RpcUpdateAddStats(CharacterStats addStats)
-    {
-        _addStats = addStats;
-    }
-    [PunRPC]
-    protected virtual void RpcUpdateExtra(string extra)
-    {
-        _extra = extra;
-    }
-    [PunRPC]
-    protected virtual void RpcUpdateDefaultSelectWeapon(int defaultSelectWeapon)
-    {
-        _defaultSelectWeapon = defaultSelectWeapon;
-    }
-    [PunRPC]
-    protected virtual void RpcUpdateAimPosition(Vector3 aimPosition)
-    {
-        _aimPosition = aimPosition;
-    }
-    #endregion
 }

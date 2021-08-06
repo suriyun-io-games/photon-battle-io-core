@@ -1435,6 +1435,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
             PhotonView applierView = PhotonView.Find(applierId);
             if (applierView != null)
                 applier = applierView.GetComponent<CharacterEntity>();
+            refreshingSumAddStats = true;
             // Found prefab, instantiates to character
             statusEffect = Instantiate(statusEffect, transform.position, transform.rotation, transform);
             // Just in case the game object might be not activated by default
@@ -1451,6 +1452,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
         StatusEffectEntity statusEffect;
         if (appliedStatusEffects.TryGetValue(dataId, out statusEffect))
         {
+            refreshingSumAddStats = true;
             appliedStatusEffects.Remove(dataId);
             if (statusEffect)
                 Destroy(statusEffect.gameObject);

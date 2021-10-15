@@ -888,7 +888,6 @@ public class CharacterEntity : BaseNetworkGameCharacter
         }
 
         animator.SetInteger("WeaponAnimId", weaponData != null ? weaponData.weaponAnimId : 0);
-
         animator.SetBool("IsIdle", !animator.GetBool("IsDead") && !animator.GetBool("DoAction") && animator.GetBool("IsGround"));
 
         if (AttackingActionId >= 0 && UsingSkillHotkeyId < 0 && !IsPlayingAttackAnim)
@@ -1333,6 +1332,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
         if (DefaultSelectWeapon != 0)
             SelectWeapon = DefaultSelectWeapon;
         IsPlayingAttackAnim = false;
+        IsPlayingUseSkillAnim = false;
         IsDeadMarked = false;
         Hp = TotalHp;
         holdingUseSkillHotkeyId = -1;

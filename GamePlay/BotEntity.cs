@@ -176,7 +176,7 @@ public class BotEntity : CharacterEntity
             {
                 case Characteristic.Aggressive:
                     if (Time.unscaledTime - lastAttackTime >= attackDuration &&
-                    Vector3.Distance(enemy.CacheTransform.position, CacheTransform.position) < GetAttackRange())
+                        Vector3.Distance(enemy.CacheTransform.position, CacheTransform.position) < GetAttackRange())
                     {
                         // Attack when nearby enemy
                         sbyte usingSkillHotkeyId;

@@ -52,7 +52,7 @@ public class StatusEffectEntity : MonoBehaviour
         {
             if (recoveryHpPerSeconds > 0 || GameplayManager.Singleton.CanReceiveDamage(receiverCharacterEntity, applierCharacterEntity))
                 receiverCharacterEntity.Hp += recoveryHpPerSeconds;
-            if (receiverCharacterEntity.Hp <= 0)
+            if (receiverCharacterEntity.Hp <= 0 && !BaseNetworkGameManager.Singleton.IsMatchEnded)
             {
                 if (applierCharacterEntity)
                     applierCharacterEntity.KilledTarget(receiverCharacterEntity);

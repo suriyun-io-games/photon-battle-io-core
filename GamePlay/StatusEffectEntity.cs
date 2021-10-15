@@ -48,11 +48,11 @@ public class StatusEffectEntity : MonoBehaviour
 
     public void Recovery()
     {
-        if (receiverCharacterEntity && receiverCharacterEntity.Hp > 0 && 
-            GameplayManager.Singleton.CanReceiveDamage(receiverCharacterEntity, applierCharacterEntity))
+        if (receiverCharacterEntity && receiverCharacterEntity.Hp > 0)
         {
-            receiverCharacterEntity.Hp += recoveryHpPerSeconds;
-            if (receiverCharacterEntity.Hp == 0)
+            if (recoveryHpPerSeconds > 0 || GameplayManager.Singleton.CanReceiveDamage(receiverCharacterEntity, applierCharacterEntity))
+                receiverCharacterEntity.Hp += recoveryHpPerSeconds;
+            if (receiverCharacterEntity.Hp <= 0)
             {
                 if (applierCharacterEntity)
                     applierCharacterEntity.KilledTarget(receiverCharacterEntity);

@@ -265,9 +265,7 @@ public class MonsterEntity : CharacterEntity
                         // Attack when nearby enemy
                         sbyte usingSkillHotkeyId;
                         if (RandomUseSkill(out usingSkillHotkeyId))
-                        {
                             UsingSkillHotkeyId = usingSkillHotkeyId;
-                        }
                         else
                             AttackingActionId = weaponData.GetRandomAttackAnimation().actionId;
                         lastAttackTime = Time.unscaledTime;

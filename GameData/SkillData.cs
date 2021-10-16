@@ -39,7 +39,7 @@ public class SkillData : ScriptableObject
         if (!attacker)
             return;
 
-        if (attacker.photonView.IsMine && statusEffectPrefab && Random.value <= statusEffectPrefab.applyRate && GameplayManager.Singleton.CanApplyStatusEffect(attacker, null))
+        if (PhotonNetwork.IsMasterClient && statusEffectPrefab && Random.value <= statusEffectPrefab.applyRate && GameplayManager.Singleton.CanApplyStatusEffect(attacker, null))
             attacker.photonView.AllRPC(attacker.RpcApplyStatusEffect, statusEffectPrefab.GetHashId(), attacker.photonView.ViewID);
 
         if (!damagePrefab)

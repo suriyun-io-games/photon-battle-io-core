@@ -7,26 +7,22 @@ using UnityEditor;
 
 public class StatusEffectEntity : MonoBehaviour
 {
-    public int GetHashId()
-    {
-        return hashId;
-    }
-
-    [SerializeField]
-    private int hashId;
-
     [Range(0f, 1f)]
     public float applyRate = 1f;
     public int recoveryHpPerSeconds = 0;
     public CharacterStats addStats;
     public float lifeTime;
+    private int hashId;
     private CharacterEntity receiverCharacterEntity;
     private CharacterEntity applierCharacterEntity;
+    private float startTime;
+    private bool destroyed;
 
     private void Start()
     {
-        if (lifeTime > 0)
+        if (lifeTime >= 0)
             Destroy(gameObject, lifeTime);
+        startTime = Time.unscaledTime;
     }
 
     private void OnDestroy()
@@ -35,15 +31,14 @@ public class StatusEffectEntity : MonoBehaviour
             receiverCharacterEntity.RemoveAppliedStatusEffect(GetHashId());
     }
 
-    private void OnValidate()
+    public int GetHashId()
     {
-#if UNITY_EDITOR
-        if (hashId != name.MakeHashId())
-        {
-            hashId = name.MakeHashId();
-            EditorUtility.SetDirty(this);
-        }
-#endif
+        return hashId;
+    }
+
+    public void SetHashId()
+    {
+        hashId = name.MakeHashId();
     }
 
     public void Recovery()

@@ -117,13 +117,9 @@ public class DamageEntity : MonoBehaviour
                 }
                 var baseAngles = attacker.CacheTransform.eulerAngles;
                 CacheTransform.rotation = Quaternion.Euler(baseAngles.x + addRotationX, baseAngles.y + addRotationY, baseAngles.z);
-                CacheRigidbody.velocity = Attacker.CacheRigidbody.velocity + GetForwardVelocity();
             }
-            else
-                CacheRigidbody.velocity = GetForwardVelocity();
         }
-        else
-            CacheRigidbody.velocity = GetForwardVelocity();
+        CacheRigidbody.velocity = GetForwardVelocity();
     }
 
     private void OnDestroy()
@@ -213,7 +209,7 @@ public class DamageEntity : MonoBehaviour
             if (statusEffectPrefab && Random.value <= statusEffectPrefab.applyRate && GameplayManager.Singleton.CanApplyStatusEffect(target, Attacker))
                 target.photonView.AllRPC(target.RpcApplyStatusEffect, statusEffectPrefab.GetHashId(), Attacker.photonView.ViewID);
         }
-        target.CacheRigidbody.AddExplosionForce(explosionForce, CacheTransform.position, explosionForceRadius);
+        target.CacheCharacterMovement.AddExplosionForce(CacheTransform.position, explosionForce, explosionForceRadius);
     }
 
     private float GetColliderExtents()

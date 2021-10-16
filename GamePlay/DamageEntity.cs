@@ -206,7 +206,7 @@ public class DamageEntity : MonoBehaviour
         if (PhotonNetwork.IsMasterClient && Attacker)
         {
             target.ReceiveDamage(Attacker, weaponDamage);
-            if (statusEffectPrefab && GameplayManager.Singleton.CanApplyStatusEffect(target, Attacker))
+            if (statusEffectPrefab && Random.value <= statusEffectPrefab.applyRate && GameplayManager.Singleton.CanApplyStatusEffect(target, Attacker))
                 target.photonView.AllRPC(target.RpcApplyStatusEffect, statusEffectPrefab.GetHashId(), Attacker.photonView.ViewID);
         }
         target.CacheRigidbody.AddExplosionForce(explosionForce, CacheTransform.position, explosionForceRadius);

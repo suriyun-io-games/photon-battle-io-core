@@ -48,11 +48,13 @@ public class StatusEffectEntity : MonoBehaviour
 
     public void Recovery()
     {
+        if (BaseNetworkGameManager.Singleton.IsMatchEnded)
+            return;
         if (receiverCharacterEntity && receiverCharacterEntity.Hp > 0)
         {
             if (recoveryHpPerSeconds > 0 || GameplayManager.Singleton.CanReceiveDamage(receiverCharacterEntity, applierCharacterEntity))
                 receiverCharacterEntity.Hp += recoveryHpPerSeconds;
-            if (receiverCharacterEntity.Hp <= 0 && !BaseNetworkGameManager.Singleton.IsMatchEnded)
+            if (receiverCharacterEntity.Hp <= 0)
             {
                 if (applierCharacterEntity)
                     applierCharacterEntity.KilledTarget(receiverCharacterEntity);
@@ -65,6 +67,6 @@ public class StatusEffectEntity : MonoBehaviour
     {
         this.receiverCharacterEntity = receiverCharacterEntity;
         this.applierCharacterEntity = applierCharacterEntity;
-        InvokeRepeating("Recovery", 0, 1);
+        InvokeRepeating(nameof(Recovery), 0, 1);
     }
 }

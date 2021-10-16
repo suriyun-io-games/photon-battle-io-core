@@ -292,12 +292,8 @@ public class MonsterEntity : CharacterEntity
 
     private void LateUpdate()
     {
-        if (PhotonNetwork.OfflineMode || PhotonNetwork.CurrentRoom == null || PhotonNetwork.CurrentRoom.Players == null)
+        if (PhotonNetwork.CurrentRoom != null && PhotonNetwork.CurrentRoom.PlayerCount > 1)
             return;
-
-        if (PhotonNetwork.CurrentRoom.Players.Count <= 1)
-            return;
-        
         // Reset state
         IsBlocking = false;
         UsingSkillHotkeyId = -1;

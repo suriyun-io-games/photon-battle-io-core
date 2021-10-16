@@ -169,7 +169,6 @@ public class BotEntity : CharacterEntity
             lookingPosition = enemy.CacheTransform.position;
         }
 
-        AttackingActionId = -1;
         if (enemy != null)
         {
             switch (characteristic)
@@ -220,6 +219,20 @@ public class BotEntity : CharacterEntity
         var targetRotation = Quaternion.LookRotation(rotateHeading);
         CacheTransform.rotation = Quaternion.Lerp(CacheTransform.rotation, Quaternion.Euler(0, targetRotation.eulerAngles.y, 0), Time.deltaTime * turnSpeed);
         UpdateStatPoint();
+    }
+
+    private void LateUpdate()
+    {
+        if (PhotonNetwork.OfflineMode || PhotonNetwork.CurrentRoom == null || PhotonNetwork.CurrentRoom.Players == null)
+            return;
+
+        if (PhotonNetwork.CurrentRoom.Players.Count <= 1)
+            return;
+
+        // Reset state
+        IsBlocking = false;
+        UsingSkillHotkeyId = -1;
+        AttackingActionId = -1;
     }
 
     void OnDrawGizmos()

@@ -252,7 +252,6 @@ public class MonsterEntity : CharacterEntity
             lookingPosition = enemy.CacheTransform.position;
         }
 
-        AttackingActionId = -1;
         if (enemy != null)
         {
             switch (characteristic)
@@ -289,6 +288,20 @@ public class MonsterEntity : CharacterEntity
         var rotateHeading = lookingPosition - CacheTransform.position;
         var targetRotation = Quaternion.LookRotation(rotateHeading);
         CacheTransform.rotation = Quaternion.Lerp(CacheTransform.rotation, Quaternion.Euler(0, targetRotation.eulerAngles.y, 0), Time.deltaTime * turnSpeed);
+    }
+
+    private void LateUpdate()
+    {
+        if (PhotonNetwork.OfflineMode || PhotonNetwork.CurrentRoom == null || PhotonNetwork.CurrentRoom.Players == null)
+            return;
+
+        if (PhotonNetwork.CurrentRoom.Players.Count <= 1)
+            return;
+        
+        // Reset state
+        IsBlocking = false;
+        UsingSkillHotkeyId = -1;
+        AttackingActionId = -1;
     }
 
     void OnDrawGizmos()

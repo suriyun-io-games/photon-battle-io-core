@@ -30,6 +30,10 @@ public class CharacterAction : MonoBehaviourPun, IPunObservable
                 stream.SendNext(AttackingActionId);
             }
             stream.SendNext(AimPosition);
+            // Reset states
+            IsBlocking = false;
+            UsingSkillHotkeyId = -1;
+            AttackingActionId = -1;
         }
     }
 }

@@ -35,6 +35,7 @@ public class DamageEntity : MonoBehaviour
     private float addRotationX;
     private float addRotationY;
     private float? colliderExtents;
+    private HashSet<int> appliedIDs = new HashSet<int>();
     public int weaponDamage { get; set; }
     public byte actionId { get; set; }
 
@@ -202,9 +203,12 @@ public class DamageEntity : MonoBehaviour
 
     private void ApplyDamage(CharacterEntity target)
     {
+        if (appliedIDs.Contains(target.photonView.ViewID))
+            return;
         // Damage receiving calculation on server only
         if (PhotonNetwork.IsMasterClient && Attacker)
         {
+            appliedIDs.Add(target.photonView.ViewID);
             target.ReceiveDamage(Attacker, weaponDamage);
             if (statusEffectPrefab && Random.value <= statusEffectPrefab.applyRate && GameplayManager.Singleton.CanApplyStatusEffect(target, Attacker))
                 target.photonView.AllRPC(target.RpcApplyStatusEffect, statusEffectPrefab.GetHashId(), Attacker.photonView.ViewID);

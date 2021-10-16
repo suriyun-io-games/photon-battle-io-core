@@ -203,10 +203,7 @@ public class BotEntity : CharacterEntity
 
         // Gets a vector that points from the player's position to the target's.
         isReachedTarget = IsReachedTargetPosition();
-        if (!isReachedTarget)
-        {
-            Move(IsDashing ? dashDirection : (targetPosition - CacheTransform.position).normalized);
-        }
+        Move(isReachedTarget ? Vector3.zero : (IsDashing ? dashDirection : (targetPosition - CacheTransform.position).normalized));
 
         if (isReachedTarget)
         {

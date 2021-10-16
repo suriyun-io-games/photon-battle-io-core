@@ -275,8 +275,7 @@ public class MonsterEntity : CharacterEntity
 
         // Gets a vector that points from the player's position to the target's.
         var isReachedTarget = IsReachedTargetPosition();
-        if (!isReachedTarget)
-            Move((targetPosition - CacheTransform.position).normalized);
+        Move(isReachedTarget ? Vector3.zero : (targetPosition - CacheTransform.position).normalized);
 
         if (isReachedTarget)
         {

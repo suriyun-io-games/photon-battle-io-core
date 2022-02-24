@@ -1159,14 +1159,18 @@ public class CharacterEntity : BaseNetworkGameCharacter
         var targetLevel = target.Level;
         var maxLevel = gameplayManager.maxLevel;
         Exp += Mathf.CeilToInt(target.RewardExp * TotalExpRate);
-        syncScore.Value += Mathf.CeilToInt(target.KillScore * TotalScoreRate);
+        var increaseScore = Mathf.CeilToInt(target.KillScore * TotalScoreRate);
+        syncScore.Value += increaseScore;
+        GameNetworkManager.Singleton.OnScoreIncrease(this, increaseScore);
         foreach (var rewardCurrency in gameplayManager.rewardCurrencies)
         {
             var currencyId = rewardCurrency.currencyId;
             var amount = rewardCurrency.amount.Calculate(targetLevel, maxLevel);
             photonView.TargetRPC(RpcTargetRewardCurrency, photonView.Owner, currencyId, amount);
         }
-        ++syncKillCount.Value;
+        var increaseKill = 1;
+        syncKillCount.Value += increaseKill;
+        GameNetworkManager.Singleton.OnKillIncrease(this, increaseKill);
         GameNetworkManager.Singleton.SendKillNotify(PlayerName, target.PlayerName, weaponData == null ? string.Empty : weaponData.GetId());
     }
 

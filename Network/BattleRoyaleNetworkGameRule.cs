@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using Photon.Pun;
 
 public class BattleRoyaleNetworkGameRule : IONetworkGameRule
@@ -17,6 +15,7 @@ public class BattleRoyaleNetworkGameRule : IONetworkGameRule
     public override bool ShowZeroKillCountWhenDead { get { return false; } }
     public override bool ShowZeroAssistCountWhenDead { get { return false; } }
     public override bool ShowZeroDieCountWhenDead { get { return false; } }
+    public override bool RankedByKillCount { get { return true; } }
 
     public override void OnStartMaster(BaseNetworkGameManager manager)
     {

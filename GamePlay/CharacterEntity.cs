@@ -282,7 +282,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
                         addStats += value.stats;
                     }
                 }
-                if (AttributeAmounts.Dict != null)
+                if (AttributeAmounts != null)
                 {
                     foreach (var kv in AttributeAmounts.Dict)
                     {
@@ -448,7 +448,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
         SelectWeapon = 0;
         SelectCustomEquipments = new int[0];
         IsInvincible = false;
-        AttributeAmounts = new AttributeAmounts(0);
+        AttributeAmounts = new AttributeAmounts();
         Extra = string.Empty;
     }
 

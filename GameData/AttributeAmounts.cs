@@ -2,25 +2,20 @@
 using System.Collections.Generic;
 
 [System.Serializable]
-public struct AttributeAmounts
+public class AttributeAmounts
 {
-    private Dictionary<int, short> attributeAmounts;
+    private Dictionary<int, short> attributeAmounts = new Dictionary<int, short>();
     public Dictionary<int, short> Dict { get { return attributeAmounts; } }
 
     private const int IntSize = sizeof(int);
     private const int ShortSize = sizeof(short);
 
-    public AttributeAmounts(int capacity)
-    {
-        attributeAmounts = new Dictionary<int, short>(capacity);
-    }
-
     public AttributeAmounts Increase(int id, short value)
     {
         if (attributeAmounts.ContainsKey(id))
-            attributeAmounts[id] = (short)(attributeAmounts[id] + 1);
+            attributeAmounts[id] = (short)(attributeAmounts[id] + value);
         else
-            attributeAmounts.Add(id, 1);
+            attributeAmounts.Add(id, value);
         return this;
     }
 
@@ -33,7 +28,7 @@ public struct AttributeAmounts
         Protocol.Serialize(length, writeBytes, ref index);
         if (length > 0)
         {
-            foreach (var attributeAmount in data.attributeAmounts)
+            foreach (var attributeAmount in data.Dict)
             {
                 Protocol.Serialize(attributeAmount.Key, writeBytes, ref index);
                 Protocol.Serialize(attributeAmount.Value, writeBytes, ref index);

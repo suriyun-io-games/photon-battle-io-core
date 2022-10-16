@@ -77,7 +77,7 @@ public class IONetworkGameRule : BaseNetworkGameRule
             targetCharacter.Level = 1;
             targetCharacter.StatPoint = 0;
             targetCharacter.WatchAdsCount = 0;
-            targetCharacter.AttributeAmounts = new AttributeAmounts(0);
+            targetCharacter.AttributeAmounts = new AttributeAmounts();
         }
         else
             ++targetCharacter.WatchAdsCount;

@@ -8,6 +8,7 @@ public class SyncAttributeAmountsRpcComponent : BaseSyncVarRpcComponent<Attribut
         base.Awake();
         entity = GetComponent<CharacterEntity>();
         onValueChange.AddListener(OnValueChange);
+        _value = new AttributeAmounts();
     }
 
     void OnValueChange(AttributeAmounts value)

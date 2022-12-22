@@ -1,8 +1,6 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using Photon.Pun;
 
 public class WeaponData : ItemData
 {
@@ -25,13 +23,6 @@ public class WeaponData : ItemData
             EffectEntity.PlayEffect(damagePrefab.spawnEffectPrefab, attacker.effectTransform);
 
         var spread = attacker.TotalSpreadDamages;
-        var damage = (float)attacker.TotalAttack;
-        damage += Random.Range(GameplayManager.Singleton.minAttackVaryRate, GameplayManager.Singleton.maxAttackVaryRate) * damage;
-        if (GameplayManager.Singleton.divideSpreadedDamageAmount)
-            damage /= spread;
-        if (damage <= 0f)
-            damage = GameplayManager.Singleton.baseDamage;
-
         var addRotationX = 0f;
         var addRotationY = 0f;
         var addingRotationY = 360f / spread;
@@ -44,12 +35,7 @@ public class WeaponData : ItemData
 
         for (var i = 0; i < spread; ++i)
         {
-            var damageEntity = DamageEntity.InstantiateNewEntityByWeapon(GetHashId(), actionId, targetPosition, attacker.photonView.ViewID, addRotationX, addRotationY);
-            if (damageEntity)
-            {
-                damageEntity.weaponDamage = Mathf.CeilToInt(damage);
-                damageEntity.actionId = actionId;
-            }
+            DamageEntity.InstantiateNewEntityByWeapon(this, actionId, targetPosition, attacker, addRotationX, addRotationY, spread);
             addRotationY += addingRotationY;
         }
     }

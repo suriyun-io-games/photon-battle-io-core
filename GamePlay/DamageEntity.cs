@@ -30,29 +30,16 @@ public class DamageEntity : MonoBehaviour
     public float speed;
     public bool relateToAttacker;
     private bool isDead;
+    private WeaponData weaponData;
+    private SkillData skillData;
     private bool isLeftHandWeapon;
-    private int attackerViewId;
+    private CharacterEntity attacker;
     private float addRotationX;
     private float addRotationY;
+    private int spread;
     private float? colliderExtents;
     private HashSet<int> appliedIDs = new HashSet<int>();
-    public int weaponDamage { get; set; }
-    public byte actionId { get; set; }
 
-    private CharacterEntity attacker;
-    public CharacterEntity Attacker
-    {
-        get
-        {
-            if (attacker == null)
-            {
-                var go = PhotonView.Find(attackerViewId);
-                if (go != null)
-                    attacker = go.GetComponent<CharacterEntity>();
-            }
-            return attacker;
-        }
-    }
     public Transform CacheTransform { get; private set; }
     public Rigidbody CacheRigidbody { get; private set; }
     public Collider CacheCollider { get; private set; }
@@ -74,24 +61,27 @@ public class DamageEntity : MonoBehaviour
     /// <summary>
     /// Init Attacker, this function must be call at server to init attacker
     /// </summary>
-    public void InitAttackData(bool isLeftHandWeapon, int attackerViewId, float addRotationX, float addRotationY)
+    public void InitAttackData(WeaponData weaponData, SkillData skillData, bool isLeftHandWeapon, CharacterEntity attacker, float addRotationX, float addRotationY, int spread)
     {
+        this.weaponData = weaponData;
+        this.skillData = skillData;
         this.isLeftHandWeapon = isLeftHandWeapon;
-        this.attackerViewId = attackerViewId;
+        this.attacker = attacker;
         this.addRotationX = addRotationX;
         this.addRotationY = addRotationY;
+        this.spread = spread;
         InitTransform();
     }
 
     private void InitTransform()
     {
-        if (Attacker == null)
+        if (attacker == null)
             return;
 
         if (relateToAttacker)
         {
             Transform damageLaunchTransform;
-            Attacker.GetDamageLaunchTransform(isLeftHandWeapon, out damageLaunchTransform);
+            attacker.GetDamageLaunchTransform(isLeftHandWeapon, out damageLaunchTransform);
             CacheTransform.SetParent(damageLaunchTransform);
             var baseAngles = attacker.CacheTransform.eulerAngles;
             CacheTransform.rotation = Quaternion.Euler(baseAngles.x + addRotationX, baseAngles.y + addRotationY, baseAngles.z);
@@ -105,14 +95,14 @@ public class DamageEntity : MonoBehaviour
 
     private void UpdateMovement()
     {
-        if (Attacker != null)
+        if (attacker != null)
         {
             if (relateToAttacker)
             {
                 if (CacheTransform.parent == null)
                 {
                     Transform damageLaunchTransform;
-                    Attacker.GetDamageLaunchTransform(isLeftHandWeapon, out damageLaunchTransform);
+                    attacker.GetDamageLaunchTransform(isLeftHandWeapon, out damageLaunchTransform);
                     CacheTransform.SetParent(damageLaunchTransform);
                 }
                 var baseAngles = attacker.CacheTransform.eulerAngles;
@@ -138,7 +128,7 @@ public class DamageEntity : MonoBehaviour
 
         var otherCharacter = other.GetComponent<CharacterEntity>();
         // Damage will not hit attacker, so avoid it
-        if (otherCharacter != null && otherCharacter.photonView.ViewID == attackerViewId)
+        if (otherCharacter != null && otherCharacter == attacker)
             return;
 
         var hitSomeAliveCharacter = false;
@@ -184,7 +174,7 @@ public class DamageEntity : MonoBehaviour
             // If not character or character is attacker, skip it.
             if (hitCharacter == null ||
                 hitCharacter == otherCharacter ||
-                hitCharacter.photonView.ViewID == attackerViewId ||
+                hitCharacter == attacker ||
                 hitCharacter.Hp <= 0 ||
                 hitCharacter.IsInvincible ||
                 !GameplayManager.Singleton.CanReceiveDamage(hitCharacter, attacker))
@@ -202,12 +192,26 @@ public class DamageEntity : MonoBehaviour
         if (appliedIDs.Contains(target.photonView.ViewID))
             return;
         // Damage receiving calculation on server only
-        if (PhotonNetwork.IsMasterClient && Attacker)
+        if (attacker != null && attacker.photonView.IsMine)
         {
             appliedIDs.Add(target.photonView.ViewID);
-            target.ReceiveDamage(Attacker, weaponDamage);
-            if (statusEffectPrefab && Random.value <= statusEffectPrefab.applyRate && GameplayManager.Singleton.CanApplyStatusEffect(target, Attacker))
-                target.photonView.AllRPC(target.RpcApplyStatusEffect, statusEffectPrefab.GetHashId(), Attacker.photonView.ViewID);
+            var statusEffectId = statusEffectPrefab != null ? statusEffectPrefab.GetHashId() : 0;
+            if (PhotonNetwork.IsMasterClient)
+            {
+                // Master client can apply damage immediately
+                if (skillData != null)
+                    attacker.ApplySkillDamage(target, skillData, spread, statusEffectId);
+                else if (weaponData != null)
+                    attacker.ApplyWeaponDamage(target, weaponData, spread, statusEffectId);
+            }
+            else
+            {
+                // Client tells master client to apply damage
+                if (skillData != null)
+                    attacker.CmdApplySkillDamage(target.photonView.ViewID, skillData.GetHashId(), spread, statusEffectId);
+                else if (weaponData != null)
+                    attacker.CmdApplyWeaponDamage(target.photonView.ViewID, weaponData.GetHashId(), spread, statusEffectId);
+            }
         }
         target.CacheCharacterMovement.AddExplosionForce(CacheTransform.position, explosionForce, explosionForceRadius);
     }
@@ -235,88 +239,72 @@ public class DamageEntity : MonoBehaviour
     }
 
     public static DamageEntity InstantiateNewEntityByWeapon(
-        int weaponId,
+        WeaponData weaponData,
         byte actionId,
         Vector3 targetPosition,
-        int attackerViewId,
+        CharacterEntity attacker,
         float addRotationX,
-        float addRotationY)
+        float addRotationY,
+        int spread)
     {
-        WeaponData weaponData;
-        if (GameInstance.Weapons.TryGetValue(weaponId, out weaponData))
+        if (weaponData == null || weaponData.damagePrefab == null)
+            return null;
+
+        if (attacker == null)
+            return null;
+
+        var damagePrefab = weaponData.damagePrefab;
+        var isLeftHandWeapon = false;
+        AttackAnimation attackAnimation;
+        if (weaponData.AttackAnimations.TryGetValue(actionId, out attackAnimation))
         {
-            var damagePrefab = weaponData.damagePrefab;
-            var isAnimationForLeftHandWeapon = false;
-            AttackAnimation attackAnimation;
-            if (weaponData.AttackAnimations.TryGetValue(actionId, out attackAnimation))
-            {
-                if (attackAnimation.damagePrefab != null)
-                    damagePrefab = attackAnimation.damagePrefab;
-                isAnimationForLeftHandWeapon = attackAnimation.isAnimationForLeftHandWeapon;
-            }
-            if (damagePrefab)
-                return InstantiateNewEntity(damagePrefab, isAnimationForLeftHandWeapon, targetPosition, attackerViewId, addRotationX, addRotationY);
-            else
-                Debug.LogWarning("Can't find weapon damage entity prefab: " + weaponId);
+            if (attackAnimation.damagePrefab != null)
+                damagePrefab = attackAnimation.damagePrefab;
+            isLeftHandWeapon = attackAnimation.isAnimationForLeftHandWeapon;
         }
-        else
-        {
-            Debug.LogWarning("Can't find weapon data: " + weaponId);
-        }
-        return null;
+        return InstantiateNewEntity(weaponData, null, damagePrefab, isLeftHandWeapon, targetPosition, attacker, addRotationX, addRotationY, spread);
     }
 
     public static DamageEntity InstantiateNewEntityBySkill(
-        int skillId,
+        SkillData skillData,
         Vector3 targetPosition,
-        int attackerViewId,
+        CharacterEntity attacker,
         float addRotationX,
-        float addRotationY)
+        float addRotationY,
+        int spread)
     {
-        SkillData skillData;
-        if (GameInstance.Skills.TryGetValue(skillId, out skillData))
-        {
-            var damagePrefab = skillData.damagePrefab;
-            if (damagePrefab)
-                return InstantiateNewEntity(damagePrefab, false, targetPosition, attackerViewId, addRotationX, addRotationY);
-            else
-                Debug.LogWarning("Can't find skill damage entity prefab: " + skillId);
-        }
-        else
-        {
-            Debug.LogWarning("Can't find skill data: " + skillId);
-        }
-        return null;
+        if (skillData == null || skillData.damagePrefab == null)
+            return null;
+
+        if (attacker == null)
+            return null;
+
+        var damagePrefab = skillData.damagePrefab;
+        var isLeftHandWeapon = false;
+        return InstantiateNewEntity(null, skillData, damagePrefab, isLeftHandWeapon, targetPosition, attacker, addRotationX, addRotationY, spread);
     }
 
     public static DamageEntity InstantiateNewEntity(
-        DamageEntity prefab,
+        WeaponData weaponData,
+        SkillData skillData,
+        DamageEntity damagePrefab,
         bool isLeftHandWeapon,
         Vector3 targetPosition,
-        int attackerViewId,
+        CharacterEntity attacker,
         float addRotationX,
-        float addRotationY)
+        float addRotationY,
+        int spread)
     {
-        if (prefab == null)
+        if (weaponData == null && skillData == null)
             return null;
-
-        CharacterEntity attacker = null;
-        var go = PhotonView.Find(attackerViewId);
-        if (go != null)
-            attacker = go.GetComponent<CharacterEntity>();
-
-        if (attacker != null)
-        {
-            Transform launchTransform;
-            attacker.GetDamageLaunchTransform(isLeftHandWeapon, out launchTransform);
-            Vector3 position = launchTransform.position + attacker.CacheTransform.forward * prefab.spawnForwardOffset;
-            Vector3 dir = targetPosition - position;
-            Quaternion rotation = Quaternion.LookRotation(dir, Vector3.up);
-            rotation = Quaternion.Euler(rotation.eulerAngles + new Vector3(addRotationX, addRotationY));
-            DamageEntity result = Instantiate(prefab, position, rotation);
-            result.InitAttackData(isLeftHandWeapon, attackerViewId, addRotationX, addRotationY);
-            return result;
-        }
-        return null;
+        Transform launchTransform;
+        attacker.GetDamageLaunchTransform(isLeftHandWeapon, out launchTransform);
+        Vector3 position = launchTransform.position + attacker.CacheTransform.forward * damagePrefab.spawnForwardOffset;
+        Vector3 dir = targetPosition - position;
+        Quaternion rotation = Quaternion.LookRotation(dir, Vector3.up);
+        rotation = Quaternion.Euler(rotation.eulerAngles + new Vector3(addRotationX, addRotationY));
+        DamageEntity result = Instantiate(damagePrefab, position, rotation);
+        result.InitAttackData(weaponData, skillData, isLeftHandWeapon, attacker, addRotationX, addRotationY, spread);
+        return result;
     }
 }

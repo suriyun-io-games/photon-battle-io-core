@@ -47,12 +47,8 @@ public class SkillData : ScriptableObject
 
         if (!attacker.IsHidding)
             EffectEntity.PlayEffect(damagePrefab.spawnEffectPrefab, attacker.effectTransform);
-        var spread = TotalSpreadDamages;
-        var damage = (float)attacker.TotalAttack + increaseDamage + (attacker.TotalAttack * increaseDamageByRate);
-        damage += Random.Range(GameplayManager.Singleton.minAttackVaryRate, GameplayManager.Singleton.maxAttackVaryRate) * damage;
-        if (damage <= 0f)
-            damage = GameplayManager.Singleton.baseDamage;
 
+        var spread = TotalSpreadDamages;
         var addRotationX = 0f;
         var addRotationY = 0f;
         var addingRotationY = 360f / spread;
@@ -65,13 +61,7 @@ public class SkillData : ScriptableObject
 
         for (var i = 0; i < spread; ++i)
         {
-            var damageEntity = DamageEntity.InstantiateNewEntityBySkill(GetHashId(), targetPosition, attacker.photonView.ViewID, addRotationX, addRotationY);
-            if (damageEntity)
-            {
-                damageEntity.weaponDamage = Mathf.CeilToInt(damage);
-                damageEntity.actionId = 0;
-            }
-
+            DamageEntity.InstantiateNewEntityBySkill(this, targetPosition, attacker, addRotationX, addRotationY, spread);
             addRotationY += addingRotationY;
         }
     }

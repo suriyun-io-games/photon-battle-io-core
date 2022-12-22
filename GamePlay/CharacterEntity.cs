@@ -1402,12 +1402,6 @@ public class CharacterEntity : BaseNetworkGameCharacter
         photonView.MasterRPC(RpcServerAddAttribute, id);
     }
 
-    public void CmdDash()
-    {
-        // Play dash animation on other clients
-        photonView.OthersRPC(RpcDash);
-    }
-
     [PunRPC]
     protected void RpcServerAddAttribute(int id)
     {
@@ -1458,12 +1452,86 @@ public class CharacterEntity : BaseNetworkGameCharacter
             Destroy(statusEffect.gameObject);
     }
 
+    public void CmdDash()
+    {
+        // Play dash animation on other clients
+        photonView.OthersRPC(RpcDash);
+    }
+
     [PunRPC]
     protected void RpcDash()
     {
         // Just play dash animation on another clients
         IsDashing = true;
         dashingTime = Time.unscaledTime;
+    }
+
+    public void CmdApplyWeaponDamage(int targetViewId, int weaponId, int spread, int statusEffectId)
+    {
+        photonView.MasterRPC(RpcApplyWeaponDamage, targetViewId, weaponId, spread, statusEffectId);
+    }
+
+    [PunRPC]
+    public void RpcApplyWeaponDamage(int targetViewId, int weaponId, int spread, int statusEffectId)
+    {
+        var target = PhotonView.Find(targetViewId);
+        if (target == null)
+            return;
+        var targetCharacter = target.GetComponent<CharacterEntity>();
+        if (targetCharacter == null)
+            return;
+        if (!GameInstance.Weapons.TryGetValue(weaponId, out var weaponData))
+            return;
+        ApplyWeaponDamage(targetCharacter, weaponData, spread, statusEffectId);
+    }
+
+    public void ApplyWeaponDamage(CharacterEntity targetCharacter, WeaponData weaponData, float spread, int statusEffectId)
+    {
+        if (targetCharacter == null || weaponData == null)
+            return;
+        var damage = (float)TotalAttack;
+        damage += Random.Range(GameplayManager.Singleton.minAttackVaryRate, GameplayManager.Singleton.maxAttackVaryRate) * damage;
+        if (GameplayManager.Singleton.divideSpreadedDamageAmount)
+            damage /= spread;
+        if (damage <= 0f)
+            damage = GameplayManager.Singleton.baseDamage;
+        targetCharacter.ReceiveDamage(this, Mathf.CeilToInt(damage));
+        if (GameInstance.StatusEffects.TryGetValue(statusEffectId, out var statusEffectPrefab) && Random.value <= statusEffectPrefab.applyRate && GameplayManager.Singleton.CanApplyStatusEffect(targetCharacter, this))
+            targetCharacter.photonView.AllRPC(targetCharacter.RpcApplyStatusEffect, statusEffectId, photonView.ViewID);
+    }
+
+    public void CmdApplySkillDamage(int targetViewId, int skillId, int spread, int statusEffectId)
+    {
+        photonView.MasterRPC(RpcApplySkillDamage, targetViewId, skillId, spread, statusEffectId);
+    }
+
+    [PunRPC]
+    public void RpcApplySkillDamage(int targetViewId, int skillId, int spread, int statusEffectId)
+    {
+        var target = PhotonView.Find(targetViewId);
+        if (target == null)
+            return;
+        var targetCharacter = target.GetComponent<CharacterEntity>();
+        if (targetCharacter == null)
+            return;
+        if (!GameInstance.Skills.TryGetValue(skillId, out var skillData))
+            return;
+        ApplySkillDamage(targetCharacter, skillData, spread, statusEffectId);
+    }
+
+    public void ApplySkillDamage(CharacterEntity targetCharacter, SkillData skillData, float spread, int statusEffectId)
+    {
+        if (targetCharacter == null || skillData == null)
+            return;
+        var damage = (float)TotalAttack;
+        damage += Random.Range(GameplayManager.Singleton.minAttackVaryRate, GameplayManager.Singleton.maxAttackVaryRate) * damage;
+        if (GameplayManager.Singleton.divideSpreadedDamageAmount)
+            damage /= spread;
+        if (damage <= 0f)
+            damage = GameplayManager.Singleton.baseDamage;
+        targetCharacter.ReceiveDamage(this, Mathf.CeilToInt(damage));
+        if (GameInstance.StatusEffects.TryGetValue(statusEffectId, out var statusEffectPrefab) && Random.value <= statusEffectPrefab.applyRate && GameplayManager.Singleton.CanApplyStatusEffect(targetCharacter, this))
+            targetCharacter.photonView.AllRPC(targetCharacter.RpcApplyStatusEffect, statusEffectId, photonView.ViewID);
     }
 
     [PunRPC]

@@ -1311,7 +1311,7 @@ public class CharacterEntity : BaseNetworkGameCharacter
             ServerInvincible();
             OnSpawn();
             var position = GetSpawnPosition();
-            CacheTransform.position = position;
+            CacheCharacterMovement.SetPosition(position);
             photonView.TargetRPC(RpcTargetSpawn, photonView.Owner, position.x, position.y, position.z);
             ServerRevive();
         }

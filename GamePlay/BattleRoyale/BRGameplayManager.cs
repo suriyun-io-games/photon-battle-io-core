@@ -619,7 +619,9 @@ public class BRGameplayManager : GameplayManager
 
     public Vector3 SpawnCharacter(CharacterEntity character)
     {
-        return character.CacheTransform.position = GetSpawnerPosition();
+        var position = GetSpawnerPosition();
+        character.CacheCharacterMovement.SetPosition(position);
+        return position;
     }
 
     [PunRPC]

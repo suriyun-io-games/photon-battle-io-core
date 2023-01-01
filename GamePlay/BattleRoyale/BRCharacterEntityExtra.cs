@@ -25,7 +25,10 @@ public class BRCharacterEntityExtra : MonoBehaviourPunCallbacks
     public bool isGroundOnce { get; private set; }
     public Transform CacheTransform { get; private set; }
     public CharacterEntity CacheCharacterEntity { get; private set; }
-    public CharacterMovement CacheCharacterMovement { get; private set; }
+    public CharacterMovement CacheCharacterMovement
+    {
+        get { return CacheCharacterEntity.CacheCharacterMovement; }
+    }
     private float botRandomSpawn;
     private bool botSpawnCalled;
     private bool botDeadRemoveCalled;
@@ -39,7 +42,6 @@ public class BRCharacterEntityExtra : MonoBehaviourPunCallbacks
         CacheCharacterEntity = GetComponent<CharacterEntity>();
         CacheCharacterEntity.enabled = false;
         CacheCharacterEntity.IsHidding = true;
-        CacheCharacterMovement = GetComponent<CharacterMovement>();
         var brGameManager = GameplayManager.Singleton as BRGameplayManager;
         if (IsMine)
         {
@@ -159,7 +161,8 @@ public class BRCharacterEntityExtra : MonoBehaviourPunCallbacks
             // Move position / rotation follow the airplane
             if (PhotonNetwork.IsMasterClient || IsMine)
             {
-                CacheTransform.position = brGameManager.GetSpawnerPosition();
+                var position = brGameManager.GetSpawnerPosition();
+                CacheCharacterMovement.SetPosition(position);
                 CacheTransform.rotation = brGameManager.GetSpawnerRotation();
             }
         }
@@ -174,7 +177,7 @@ public class BRCharacterEntityExtra : MonoBehaviourPunCallbacks
         if (brGameManager.currentState != BRState.WaitingForPlayers && !isSpawned && PhotonNetwork.IsMasterClient)
         {
             var position = CacheCharacterEntity.GetSpawnPosition();
-            CacheCharacterEntity.CacheTransform.position = position;
+            CacheCharacterMovement.SetPosition(position);
             CacheCharacterEntity.photonView.TargetRPC(CacheCharacterEntity.RpcTargetSpawn, CacheCharacterEntity.photonView.Owner, position.x, position.y, position.z);
             isSpawned = true;
         }
@@ -229,7 +232,7 @@ public class BRCharacterEntityExtra : MonoBehaviourPunCallbacks
     [PunRPC]
     public void RpcCharacterSpawned(Vector3 spawnPosition)
     {
-        CacheCharacterEntity.CacheTransform.position = spawnPosition;
+        CacheCharacterMovement.SetPosition(spawnPosition);
         CacheCharacterMovement.enabled = true;
     }
 

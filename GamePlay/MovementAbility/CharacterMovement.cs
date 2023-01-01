@@ -419,4 +419,11 @@ public class CharacterMovement : MonoBehaviour
         Vector3 dir = CacheTransform.position - origin;
         explosionForce += dir * force;
     }
+
+    public void SetPosition(Vector3 position)
+    {
+        CacheCharacterController.enabled = false;
+        CacheTransform.position = position;
+        CacheCharacterController.enabled = true;
+    }
 }
